@@ -438,7 +438,7 @@
         "title": "Mock Earthquake Early Warning",
         "newWarning": "New Mock Earthquake Warning",
         "id": "Warning ID",
-        "title": "Title",
+        "fieldTitle": "Title",
         "originDelay": "Origin Delay (s)",
         "reportDelay": "Report Delay (s)",
         "hypocenter": "Epicenter Location",

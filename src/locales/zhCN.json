@@ -438,7 +438,7 @@
         "title": "模拟地震预警",
         "newWarning": "新建模拟地震预警",
         "id": "预警ID",
-        "title": "标题",
+        "fieldTitle": "标题",
         "originDelay": "发震延迟 (s)",
         "reportDelay": "发报延迟 (s)",
         "hypocenter": "震中地名",

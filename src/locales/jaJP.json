@@ -438,7 +438,7 @@
         "title": "模擬地震早期警報",
         "newWarning": "新規模擬地震警報",
         "id": "警報ID",
-        "title": "タイトル",
+        "fieldTitle": "タイトル",
         "originDelay": "発震遅延 (s)",
         "reportDelay": "報告遅延 (s)",
         "hypocenter": "震央地名",

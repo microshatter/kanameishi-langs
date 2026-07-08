@@ -438,7 +438,7 @@
         "title": "모의 지진 조기 경보",
         "newWarning": "새 모의 지진 경보",
         "id": "경보 ID",
-        "title": "제목",
+        "fieldTitle": "제목",
         "originDelay": "발생 지연 (s)",
         "reportDelay": "보고 지연 (s)",
         "hypocenter": "진앙 지명",

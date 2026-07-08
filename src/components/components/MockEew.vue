@@ -26,7 +26,7 @@
                         <el-input v-model="id" :placeholder="t('mockEew.optional')" />
                     </el-form-item>
 
-                    <el-form-item :label="t('mockEew.title')">
+                    <el-form-item :label="t('mockEew.fieldTitle')">
                         <el-input v-model="title" :placeholder="t('mockEew.optional')" />&nbsp;第{{ currentPage + 1 }}报
                     </el-form-item>
 
