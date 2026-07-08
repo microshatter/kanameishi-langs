@@ -123,7 +123,8 @@ export const useSettingsStore = defineStore('settingsStore', {
             checkPrerelease: false,
             gameMode: false,
             autoRefresh: false,
-            displayTyphoon: false
+            displayTyphoon: false,
+            locale: 'zh-CN',
         },
         advancedSettings: {
             enableIclEew: false,

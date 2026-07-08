@@ -120,7 +120,7 @@
                                         <p>越高灵敏度，越容易检测到地震，但越容易误检测。</p>
                                     </el-popover>
                                 </span>
-                                <el-select 
+                                <el-select
                                     v-model="settingsStore.mainSettings.displaySeisNet.niedSensitivity"
                                     size="small"
                                     :disabled="!settingsStore.mainSettings.displaySeisNet.niedNet"
@@ -159,7 +159,7 @@
                             </div>
                             <div class="switch-full pl-8">
                                 <span>震源推算文字信息</span>
-                                <el-select 
+                                <el-select
                                     v-model="settingsStore.mainSettings.displaySeisNet.niedHypoInfTextInfo"
                                     size="small"
                                     :disabled="!settingsStore.mainSettings.displaySeisNet.niedNet || !settingsStore.mainSettings.displaySeisNet.niedHypoInf"
@@ -182,7 +182,7 @@
                             </div>
                             <div class="switch-full pl-4">
                                 <span>API</span>
-                                <el-select 
+                                <el-select
                                     v-model="settingsStore.mainSettings.displaySeisNet.tremApi"
                                     size="small"
                                     :disabled="!settingsStore.mainSettings.displaySeisNet.tremNet"
@@ -220,7 +220,7 @@
                                         <p>越高灵敏度，越容易检测到地震，但越容易误检测。</p>
                                     </el-popover>
                                 </span>
-                                <el-select 
+                                <el-select
                                     v-model="settingsStore.mainSettings.displaySeisNet.kmaSensitivity"
                                     size="small"
                                     :disabled="!settingsStore.mainSettings.displaySeisNet.kmaNet"
@@ -234,7 +234,7 @@
                             </div>
                             <div class="switch-full pl-4">
                                 <span>加速度保持</span>
-                                <el-select 
+                                <el-select
                                     v-model="settingsStore.mainSettings.displaySeisNet.kmaIntHold"
                                     size="small"
                                     :disabled="!settingsStore.mainSettings.displaySeisNet.kmaNet"
@@ -471,8 +471,8 @@
                         </div>
                         <div class="switch-full pl-4">
                             <div class="justify-between" style="width: 9rem;">
-                                <el-checkbox 
-                                    v-model="settingsStore.mainSettings.playIntenseSound" 
+                                <el-checkbox
+                                    v-model="settingsStore.mainSettings.playIntenseSound"
                                     :disabled="!settingsStore.advancedSettings.forceCalcInt"
                                 >强有感提示音</el-checkbox>
                                 <div v-if="!settingsStore.nearestJmaLoc" class="int" :class="setClassName(settingsStore.mainSettings.intenseLocalCsis, false)">
@@ -573,7 +573,7 @@
                                     <p>使用“|”对多个关键词进行分隔。</p>
                                 </el-popover>
                             </span>
-                            <el-input 
+                            <el-input
                                 class="text-right"
                                 v-model="settingsStore.mainSettings.actionWhiteList"
                                 style="width: 180px;"
@@ -676,7 +676,7 @@
                         </div>
                         <div class="switch-full">
                             <span>选择音效</span>
-                            <el-select 
+                            <el-select
                                 v-model="settingsStore.mainSettings.soundEffect"
                                 size="small"
                                 style="width: 72px;"
@@ -1109,7 +1109,7 @@
                     <div class="switch-group">
                         <div class="switch-full">
                             <span>首选FAN Studio API服务器</span>
-                            <el-select 
+                            <el-select
                                 v-model="settingsStore.advancedSettings.defaultFanServer"
                                 size="small"
                                 style="width: 72px;"
@@ -1130,7 +1130,7 @@
                         </div>
                         <div class="switch-full" v-if="settingsStore.advancedSettings.enableMultiApi">
                             <span>同时接入更多API</span>
-                            <el-switch 
+                            <el-switch
                             v-model="settingsStore.advancedSettings.multiApi"
                             @change="handleNeedReload" />
                         </div>
@@ -1162,7 +1162,7 @@
                                     </strong>
                                 </el-popover>
                             </span>
-                            <el-switch 
+                            <el-switch
                             v-model="settingsStore.advancedSettings.forceCalcInt"
                             @change="handleNeedReload" />
                         </div>
@@ -1182,7 +1182,7 @@
                                     <p><strong>此功能需重新加载页面后生效。</strong></p>
                                 </el-popover>
                             </span>
-                            <el-switch 
+                            <el-switch
                             v-model="settingsStore.advancedSettings.useClassicMapLoader"
                             @change="handleNeedReload" />
                         </div>
@@ -1202,7 +1202,7 @@
                                     <p><strong>此功能需重新加载页面后生效。</strong></p>
                                 </el-popover>
                             </span>
-                            <el-switch 
+                            <el-switch
                             v-model="settingsStore.advancedSettings.preventFlickerMode"
                             @change="handleNeedReload" />
                         </div>
@@ -1222,7 +1222,7 @@
                                     <p><strong>此功能需重新加载页面后生效。</strong></p>
                                 </el-popover>
                             </span>
-                            <el-switch 
+                            <el-switch
                             v-model="settingsStore.advancedSettings.mockEew"
                             @change="handleMockEew" />
                         </div>
@@ -1243,7 +1243,7 @@
                                     <p><strong>由此功能创建的地震预警不会自动更新。</strong></p>
                                 </el-popover>
                             </span>
-                            <el-switch 
+                            <el-switch
                             v-model="settingsStore.advancedSettings.mockOnReplay"
                             :disabled="!settingsStore.advancedSettings.mockEew" />
                         </div>
@@ -1258,13 +1258,26 @@
                                 v-model="advancedInput"
                                 size="small"
                                 style="width: 192px;"
-                                @change="handleAdvance" 
+                                @change="handleAdvance"
                             />
                         </div>
                     </div>
                 </div>
                 <span class="sub-title">关于</span>
                 <div class="group">
+                    <span class="font-bold w-full">{{ t('language.title') }}</span>
+                    <div class="switch-group">
+                        <div class="switch-full">
+                            <span>{{ t('language.select') }}</span>
+                            <el-select
+                                style="width: 120px;"
+                                size="small"
+                                v-model="settingsStore.mainSettings.locale"
+                            >
+                                <el-option v-for="locale in availableLocales" :key="locale" :label="t('language.name', [], { locale })" :value="locale" />
+                            </el-select>
+                        </div>
+                    </div>
                     <span class="font-bold w-full" v-if="isTauri">自启动</span>
                     <div class="switch-group" v-if="isTauri">
                         <div class="switch-full">
@@ -1306,7 +1319,7 @@
                 </div>
                 <span class="sub-title" v-if="needReload">需要重载</span>
                 <div class="group">
-                    <el-button 
+                    <el-button
                         type="warning"
                         v-if="needReload"
                         @click="handleReload"
@@ -1422,6 +1435,9 @@
 </template>
 
 <script setup>
+import { useI18n } from 'vue-i18n';
+const {t, locale, availableLocales} = useI18n({useScope: 'global'})
+
 import { useSettingsStore } from '@/stores/settings';
 import { useStatusStore } from '@/stores/status';
 import { chimeUrls, utilUrls } from '@/utils/Urls';
