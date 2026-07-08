@@ -2,7 +2,7 @@
     <div class="outer1">
         <div class="modal" @click="statusStore.showStatusPanel = false"></div>
         <div class="container">
-            <div class="title">状态面板</div>
+            <div class="title">{{ t('statusPanel.title') }}</div>
             <div class="grids">
                 <div class="eqGrid">
                     <EqGrid v-for="(source, index) of eewList" :key="index" :source />
@@ -21,6 +21,8 @@
 </template>
 
 <script setup>
+import { useI18n } from 'vue-i18n';
+const { t } = useI18n({ useScope: 'global' })
 import EqGrid from "@/components/components/EqGrid.vue";
 import MockEew from "./components/MockEew.vue";
 import { useSettingsStore } from "@/stores/settings";

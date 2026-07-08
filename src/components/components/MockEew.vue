@@ -4,86 +4,86 @@
             statusStore.showMockDialog = true
             statusStore.showStatusPanel = false
         }">
-            <div class="title">新建模拟地震预警</div>
+            <div class="title">{{ t('mockEew.newWarning') }}</div>
             <Plus class="icon" />
         </div>
     </div>
     <el-dialog v-model="statusStore.showMockDialog" width="35rem" :show-close="false" append-to-body>
         <template #header>
             <div class="flex justify-between items-center">
-                <div class="title">模拟地震预警</div>
+                <div class="title">{{ t('mockEew.title') }}</div>
                 <div class="flex items-center">
                     <input ref="fileInput" type="file" accept=".json" style="display: none;" @change="onFileSelected" />
-                    <el-button type="primary" @click="importScenario">导入</el-button>
-                    <el-button @click="exportScenario">导出</el-button>
+                    <el-button type="primary" @click="importScenario">{{ t('mockEew.import') }}</el-button>
+                    <el-button @click="exportScenario">{{ t('mockEew.export') }}</el-button>
                 </div>
             </div>
         </template>
         <template #default>
             <div v-if="currentForm">
                 <el-form :model="currentForm" label-width="12.5rem">
-                    <el-form-item label="预警ID">
-                        <el-input v-model="id" placeholder="选填" />
+                    <el-form-item :label="t('mockEew.id')">
+                        <el-input v-model="id" :placeholder="t('mockEew.optional')" />
                     </el-form-item>
 
-                    <el-form-item label="标题">
-                        <el-input v-model="title" placeholder="选填" />&nbsp;第{{ currentPage + 1 }}报
+                    <el-form-item :label="t('mockEew.title')">
+                        <el-input v-model="title" :placeholder="t('mockEew.optional')" />&nbsp;第{{ currentPage + 1 }}报
                     </el-form-item>
 
-                    <el-form-item label="发震延迟 (s)">
+                    <el-form-item :label="t('mockEew.originDelay')">
                         <el-input-number v-model="currentForm.originDelay" :step="1" />
                     </el-form-item>
 
-                    <el-form-item label="发报延迟 (s)">
+                    <el-form-item :label="t('mockEew.reportDelay')">
                         <el-input-number v-model="currentForm.reportDelay" :min="0" :step="1" />
                     </el-form-item>
 
-                    <el-form-item label="震中地名">
-                        <el-input v-model="currentForm.hypocenter" placeholder="选填" />
+                    <el-form-item :label="t('mockEew.hypocenter')">
+                        <el-input v-model="currentForm.hypocenter" :placeholder="t('mockEew.optional')" />
                     </el-form-item>
 
-                    <el-form-item label="拾取经纬度">
-                        <el-button class="pick-latlng" @click="pickLatLng">拾取经纬度</el-button>
+                    <el-form-item :label="t('mockEew.pickLatLng')">
+                        <el-button class="pick-latlng" @click="pickLatLng">{{ t('mockEew.pickLatLng') }}</el-button>
                     </el-form-item>
 
-                    <el-form-item label="纬度">
+                    <el-form-item :label="t('mockEew.latitude')">
                         <el-input-number v-model="currentForm.lat" :step="0.1" :min="-90" :max="90" />
                     </el-form-item>
 
-                    <el-form-item label="经度">
+                    <el-form-item :label="t('mockEew.longitude')">
                         <el-input-number v-model="currentForm.lng" :step="0.1" :min="-180" :max="180" />
                     </el-form-item>
 
-                    <el-form-item label="深度 (km)">
+                    <el-form-item :label="t('mockEew.depth')">
                         <el-input-number v-model="currentForm.depth" :step="10" :min="0" :max="700" />
                     </el-form-item>
 
-                    <el-form-item label="震级">
+                    <el-form-item :label="t('mockEew.magnitude')">
                         <el-input-number v-model="currentForm.magnitude" :step="0.1" :min="0" :max="10"
                             :precision="1" />
                     </el-form-item>
 
-                    <el-form-item label="使用震度">
+                    <el-form-item :label="t('mockEew.useShindo')">
                         <el-switch v-model="useShindo" />
                     </el-form-item>
 
-                    <el-form-item :label="useShindo ? '最大震度' : '最大烈度'">
-                        <el-select v-model="currentForm.maxIntensity" placeholder="请选择">
+                    <el-form-item :label="useShindo ? t('mockEew.maxShindo') : t('mockEew.maxIntensity')">
+                        <el-select v-model="currentForm.maxIntensity" :placeholder="t('common.select')">
                             <el-option v-for="intensity in intensities" :key="intensity" :label="intensity"
                                 :value="intensity" />
                         </el-select>
                     </el-form-item>
 
-                    <el-form-item label="假定震源">
+                    <el-form-item :label="t('mockEew.assumedHypocenter')">
                         <el-switch v-model="currentForm.isAssumption" />
                     </el-form-item>
 
-                    <el-form-item label="警报">
-                        <el-switch v-model="currentForm.isWarn" v-if="currentForm.maxIntensity != '自动'" />
-                        <span v-else>自动判断</span>
+                    <el-form-item :label="t('mockEew.warning')">
+                        <el-switch v-model="currentForm.isWarn" v-if="currentForm.maxIntensity != t('mockEew.autoDetect')" />
+                        <span v-else>{{ t('mockEew.autoDetect') }}</span>
                     </el-form-item>
 
-                    <el-form-item label="取消报">
+                    <el-form-item :label="t('mockEew.cancelReport')">
                         <el-switch v-model="currentForm.isCanceled" />
                     </el-form-item>
                 </el-form>
@@ -93,16 +93,16 @@
         <template #footer>
             <div class="flex justify-between items-center">
                 <div class="flex items-center gap">
-                    <el-button @click="prevPage" :disabled="currentPage == 0">上一页</el-button>
+                    <el-button @click="prevPage" :disabled="currentPage == 0">{{ t('mockEew.prevPage') }}</el-button>
                     <div>{{ currentPage + 1 }} / {{ forms.length }}</div>
-                    <el-button @click="nextPage">下一页</el-button>
+                    <el-button @click="nextPage">{{ t('mockEew.nextPage') }}</el-button>
                 </div>
 
                 <div class="flex items-center">
-                    <el-button type="danger" @click="removePage" :disabled="forms.length === 1">删除</el-button>
-                    <el-button @click="addPage">插入</el-button>
-                    <el-button @click="statusStore.showMockDialog = false">取消</el-button>
-                    <el-button type="primary" @click="submitScenario">提交</el-button>
+                    <el-button type="danger" @click="removePage" :disabled="forms.length === 1">{{ t('mockEew.delete') }}</el-button>
+                    <el-button @click="addPage">{{ t('mockEew.insert') }}</el-button>
+                    <el-button @click="statusStore.showMockDialog = false">{{ t('mockEew.cancel') }}</el-button>
+                    <el-button type="primary" @click="submitScenario">{{ t('mockEew.submit') }}</el-button>
                 </div>
             </div>
         </template>
@@ -110,6 +110,8 @@
 </template>
 
 <script setup>
+import { useI18n } from 'vue-i18n';
+const { t } = useI18n({ useScope: 'global' })
 import { useStatusStore } from '@/stores/status';
 import { useTimeStore } from '@/stores/time';
 import dayjs from 'dayjs';

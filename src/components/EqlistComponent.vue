@@ -2,7 +2,7 @@
   <div class="outer1">
     <div class="container">
       <div class="bar" @click="smoothScrollToTop">
-        <div class="title">地震/海啸信息</div>
+        <div class="title">{{ t('eqlist.title') }}</div>
         <div class="switch">
           <el-select
             style="width: 90px;"
@@ -10,20 +10,20 @@
             size="small"
             @click.stop
           >
-            <el-option label="所有震级" :value="0" />
-            <el-option label="2.0级以上" :value="2.0" />
-            <el-option label="2.5级以上" :value="2.5" />
-            <el-option label="3.0级以上" :value="3.0" />
-            <el-option label="3.5级以上" :value="3.5" />
-            <el-option label="4.0级以上" :value="4.0" />
-            <el-option label="4.5级以上" :value="4.5" />
-            <el-option label="5.0级以上" :value="5.0" />
-            <el-option label="5.5级以上" :value="5.5" />
-            <el-option label="6.0级以上" :value="6.0" />
-            <el-option label="6.5级以上" :value="6.5" />
-            <el-option label="7.0级以上" :value="7.0" />
-            <el-option label="7.5级以上" :value="7.5" />
-            <el-option label="8.0级以上" :value="8.0" />
+            <el-option :label="t('filter.allMagnitudes')" :value="0" />
+            <el-option :label="t('filter.above2')" :value="2.0" />
+            <el-option :label="t('filter.above2p5')" :value="2.5" />
+            <el-option :label="t('filter.above3')" :value="3.0" />
+            <el-option :label="t('filter.above3p5')" :value="3.5" />
+            <el-option :label="t('filter.above4')" :value="4.0" />
+            <el-option :label="t('filter.above4p5')" :value="4.5" />
+            <el-option :label="t('filter.above5')" :value="5.0" />
+            <el-option :label="t('filter.above5p5')" :value="5.5" />
+            <el-option :label="t('filter.above6')" :value="6.0" />
+            <el-option :label="t('filter.above6p5')" :value="6.5" />
+            <el-option :label="t('filter.above7')" :value="7.0" />
+            <el-option :label="t('filter.above7p5')" :value="7.5" />
+            <el-option :label="t('filter.above8')" :value="8.0" />
           </el-select>
           <el-select
             style="width: 90px;"
@@ -35,7 +35,7 @@
           >
             <template #tag>
               <span class="el-select__placeholder custom-tag">
-                {{ settingsStore.mainSettings.historySources.length }}个数据源
+                {{ settingsStore.mainSettings.historySources.length }}{{ t('eqlist.sources') }}
               </span>
             </template>
             <el-option label="CENC" value="CENC" :disabled="!statusStore.enabledSource.includes('cencEqlist')" />
@@ -58,6 +58,8 @@
 </template>
 
 <script setup>
+import { useI18n } from 'vue-i18n';
+const { t } = useI18n({ useScope: 'global' })
 import NmefcTsunami from './components/NmefcTsunami.vue';
 import JmaTsunami from './components/JmaTsunami.vue';
 import { useSettingsStore } from '@/stores/settings';
