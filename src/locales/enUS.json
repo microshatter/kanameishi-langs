@@ -333,8 +333,8 @@
     },
     "map": {
         "eew": {
-            "estimatedMaxShindo": "Estimated Max Seismic Intensity",
-            "estimatedMaxIntensity": "Estimated Max Intensity",
+            "estimatedMaxShindo": "Est. Shindo",
+            "estimatedMaxIntensity": "Est. Intensity",
             "hypocenterUnknown": "Hypocenter Under Investigation",
             "magnitudeUnknown": "Magnitude Under Investigation",
             "assumedHypocenter": "Assumed Hypocenter Elements",
@@ -374,17 +374,17 @@
             "tremInterval": "TREM Interval",
             "kmaRealtime": "KMA Real-time",
             "kmaInterval": "KMA Interval",
-            "maxShindo": "Max Seismic Intensity",
+            "maxShindo": "Max Shindo",
             "maxIntensity": "Max Intensity",
-            "localShindo": "Estimated Local Seismic Intensity",
-            "localIntensity": "Estimated Local Intensity",
+            "localShindo": "Est. Local Seismic Intensity",
+            "localIntensity": "Est. Local Intensity",
             "niedStatus": "Strong Motion Monitor:",
             "tremStatus": "TREM-Net:",
             "kmaStatus": "KMA-PEWS:"
         },
         "legend": {
-            "intensity": "Intensity",
-            "shindo": "Shindo",
+            "intensity": "Int.",
+            "shindo": "Shin.",
             "mapColor": "Map Color"
         },
         "websocket": {
@@ -400,8 +400,8 @@
         "history": {
             "hypocenterUnknown": "Hypocenter Under Investigation",
             "magnitudeUnknown": "Unknown",
-            "maxShindo": "Max Seismic Intensity",
-            "maxIntensity": "Estimated Max Intensity",
+            "maxShindo": "Max Shindo",
+            "maxIntensity": "Est. Intensity",
             "viewWebpage": "View Webpage",
             "stationReplay": "Station Replay",
             "stopReplay": "Stop Replay",
@@ -414,8 +414,8 @@
             "hypocenter": "Epicenter:",
             "originTime": "Origin Time:",
             "magnitude": "Magnitude:",
-            "estimatedMaxShindo": "Estimated Max Shindo:",
-            "estimatedMaxIntensity": "Estimated Max Intensity:",
+            "estimatedMaxShindo": "Est. Max Shindo:",
+            "estimatedMaxIntensity": "Est. Max Intensity:",
             "mockReplayPrefix": "Mock Replay:"
         },
         "kmaNet": {
@@ -449,7 +449,7 @@
         "magnitude": "Magnitude",
         "useShindo": "Use Seismic Intensity Scale",
         "maxIntensity": "Max Intensity",
-        "maxShindo": "Max Seismic Intensity",
+        "maxShindo": "Max Shindo",
         "assumedHypocenter": "Assumed Hypocenter",
         "warning": "Warning",
         "autoDetect": "Auto Detect",
