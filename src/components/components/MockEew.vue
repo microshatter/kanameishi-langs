@@ -134,7 +134,7 @@ const id = ref('')
 const title = ref('')
 const useShindo = ref(false)
 
-const createEmptyMessage = () => ({
+const defaultMessage = {
     originDelay: 0,
     reportDelay: 5,
     isAssumption: false,
@@ -146,9 +146,11 @@ const createEmptyMessage = () => ({
     depth: 10,
     magnitude: 5.0,
     maxIntensity: ''
-})
+}
 
-forms.push(createEmptyMessage())
+const createDefaultMessage = () => ({ ...defaultMessage })
+
+forms.push(createDefaultMessage())
 
 const currentForm = computed(() => forms[currentPage.value])
 
@@ -188,6 +190,12 @@ const removePage = () => {
 }
 
 const generateEqMessage = (form, index, id) => {
+    form.originDelay = form.originDelay ?? defaultMessage.originDelay
+    form.reportDelay = form.reportDelay ?? defaultMessage.reportDelay
+    form.lat = form.lat ?? defaultMessage.lat
+    form.lng = form.lng ?? defaultMessage.lng
+    form.depth = form.depth ?? defaultMessage.depth
+    form.magnitude = form.magnitude ?? defaultMessage.magnitude
     const reportNum = index + 1
     const isFinal = reportNum == forms.length
     const reportNumText = `第${reportNum}报${isFinal ? '（最终）' : ''}`
