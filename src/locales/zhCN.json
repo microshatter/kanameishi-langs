@@ -248,7 +248,7 @@
             "title": "高级",
             "fanServer": "首选FAN Studio API服务器",
             "provinceCea": "中国地震局预警融合省级源",
-            "manageToken": "管理Token",
+            "manageToken": "管理API Keys",
             "manage": "管理",
             "multiApi": "同时接入更多API",
             "displayApi": "显示API名称",
