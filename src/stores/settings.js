@@ -135,7 +135,7 @@ export const useSettingsStore = defineStore('settingsStore', {
             provinceCeaEew: false,
             defaultFanServer: 0,
             tokens: {
-                fan_dev: ''
+                fanApiKey: ''
             },
             multiApi: false,
             displayApiType: false,
@@ -170,7 +170,6 @@ export const useSettingsStore = defineStore('settingsStore', {
             }
             return nearestLoc
         },
-        displayTokenButton: (state) => state.advancedSettings.enableIclEew,
         actionWhiteListArr: (state) => state.mainSettings.actionWhiteList.split('|').filter(key => key)
     },
     actions: {

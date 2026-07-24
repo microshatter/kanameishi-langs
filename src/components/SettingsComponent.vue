@@ -1341,8 +1341,8 @@
         </el-dialog>
         <el-dialog v-model="showTokenManager" width="300px" top="20vh" :show-close="false" append-to-body>
             <el-form :model="idForm">
-                <el-form-item v-if="settingsStore.advancedSettings.enableIclEew" label="FAN:DEV" label-width="60px">
-                    <el-input v-model="settingsStore.advancedSettings.tokens.fan_dev" @change="handleNeedReload" />
+                <el-form-item label="FAN Studio API" label-width="110px">
+                    <el-input v-model="settingsStore.advancedSettings.tokens.fanApiKey" @change="handleNeedReload" />
                 </el-form-item>
             </el-form>
             <template #footer>
