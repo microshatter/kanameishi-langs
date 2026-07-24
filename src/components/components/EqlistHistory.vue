@@ -6,13 +6,13 @@
             }">
                 <div class="background" :class="item.className"></div>
                 <div v-if="item.useShindo" class="intensity" :class="item.className">
-                    <div class="intensity-title">{{ item.intTitle || '最大震度' }}</div>
+                    <div class="intensity-title">{{ item.intTitle || t('eqlist.history.maxShindo') }}</div>
                     <div :class="formatShindo(item.maxIntensity) != '?' ? 'shindo' : 'csis'">
                         {{ formatShindo(item.maxIntensity) }}
                     </div>
                 </div>
                 <div v-else class="intensity" :class="item.className">
-                    <div class="intensity-title">{{ item.intTitle || '预估烈度' }}</div>
+                    <div class="intensity-title">{{ item.intTitle || t('eqlist.history.maxIntensity') }}</div>
                     <div class="csis" :class="{
                         'roman': settingsStore.mainSettings.useRomanCsis,
                         'scale-75': item.maxIntensity == '8',
@@ -22,18 +22,18 @@
                     </div>
                 </div>
                 <div class="right">
-                    <div class="location">{{ item.hypocenter || '震源 調査中' }}</div>
+                    <div class="location">{{ item.hypocenter || t('eqlist.history.hypocenterUnknown') }}</div>
                     <div class="time">{{ item.originTime + ` (${formatTimeZone(item.timeZone)})` }}</div>
                     <div class="bottom">
-                        <div class="magnitude">M{{ item.magnitude ? item.magnitude.toFixed(1) : '不明' }}</div>
+                        <div class="magnitude">M{{ item.magnitude ? item.magnitude.toFixed(1) : t('eqlist.history.magnitudeUnknown') }}</div>
                         <div class="depth">{{ item.depth.toFixed(0) }}km</div>
                         <div class="source">{{ (item.intReportId ? '*' : '') + item.source }}</div>
                     </div>
                 </div>
                 <div class="buttons" @contextmenu.prevent="handleCopy(item)">
-                    <el-button class="button" type="warning" plain @click="openUrl(item.url)">查看网页</el-button>
-                    <el-button class="button" :type="isReplaying(item) ? 'danger' : 'primary'" plain @click="toggleReplay(item)">{{ isReplaying(item) ? '停止回放' : '测站回放' }}</el-button>
-                    <el-button class="button" :type="displayIds.has(item.id) ? 'danger' : 'success'" plain @click="displayOnMap(item)">{{ displayIds.has(item.id) ? '取消显示' : '地图显示' }}</el-button>
+                    <el-button class="button" type="warning" plain @click="openUrl(item.url)">{{ t('eqlist.history.viewWebpage') }}</el-button>
+                    <el-button class="button" :type="isReplaying(item) ? 'danger' : 'primary'" plain @click="toggleReplay(item)">{{ isReplaying(item) ? t('eqlist.history.stopReplay') : t('eqlist.history.stationReplay') }}</el-button>
+                    <el-button class="button" :type="displayIds.has(item.id) ? 'danger' : 'success'" plain @click="displayOnMap(item)">{{ displayIds.has(item.id) ? t('eqlist.history.cancelDisplay') : t('eqlist.history.displayOnMap') }}</el-button>
                 </div>
             </div>
         </div>
@@ -42,6 +42,8 @@
 
 <script setup>
 import '@/assets/background.css';
+import { useI18n } from 'vue-i18n';
+const { t } = useI18n({ useScope: 'global' })
 import { reactive, computed, inject, nextTick, onBeforeUnmount, watch } from 'vue';
 import { useSettingsStore } from '@/stores/settings';
 import { defaultEqMessage, useStatusStore } from '@/stores/status';
@@ -148,7 +150,7 @@ const stopReplay = (resetDelay = true) => {
     }
 }
 const handleCopy = async (item) => {
-    const content = `${item.hypocenter} ${item.originTime} (UTC${formatTimeZone(item.timeZone)}) M${item.magnitude ? item.magnitude.toFixed(1) : '不明'} ${item.depth.toFixed(0)}km ${item.useShindo ? ('最大震度' + formatShindo(item.maxIntensity, false)) : ('预估最大烈度' + item.maxIntensity)}`
+    const content = `${item.hypocenter} ${item.originTime} (UTC${formatTimeZone(item.timeZone)}) M${item.magnitude ? item.magnitude.toFixed(1) : t('eqlist.history.magnitudeUnknown')} ${item.depth.toFixed(0)}km ${item.useShindo ? (t('eqlist.history.maxShindo') + formatShindo(item.maxIntensity, false)) : (t('eqlist.history.estimatedMaxIntensity') + item.maxIntensity)}`
     try {
         if(isTauri()) {
             await writeText(content)
@@ -157,13 +159,13 @@ const handleCopy = async (item) => {
             await navigator.clipboard.writeText(content)
         }
         ElMessage({
-            message: '复制成功',
+            message: t('eqlist.history.copied'),
             type: 'success'
         })
     } catch (e) {
         console.log(e)
         ElMessage({
-            message: '复制失败',
+            message: t('eqlist.history.copyFailed'),
             type: 'error'
         })
     }
@@ -177,8 +179,8 @@ const displayOnMap = (item) => {
     else {
         const eqMessage = Object.assign({}, defaultEqMessage, item)
         eqMessage.source = 'history'
-        eqMessage.title = eqMessage.titleText = '历史地震 ' + `(${item.source})`
-        eqMessage.depthText = '深度: ' + eqMessage.depth.toFixed(0) + 'km'
+        eqMessage.title = eqMessage.titleText = t('eqlist.history.historyPrefix') + `(${item.source})`
+        eqMessage.depthText = t('eqlist.history.depth') + eqMessage.depth.toFixed(0) + 'km'
         eqMessage.reportTime = stampToTime(timeStore.getTimeStamp(), eqMessage.timeZone)
         if(!statusStore.map) return
         const newEvent = reactive(new HistoryEvent(statusStore.map, eqMessage, smartSetView, historyList))

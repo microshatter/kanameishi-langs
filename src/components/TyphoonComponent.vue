@@ -5,6 +5,8 @@
 </template>
 
 <script setup>
+import { useI18n } from 'vue-i18n';
+const { t } = useI18n({ useScope: 'global' })
 import L from 'leaflet';
 import Http from '@/classes/Http';
 import { useStatusStore } from '@/stores/status';
@@ -59,42 +61,42 @@ const createTyphoonSvgMarker = (currentInfo) => {
     let warnLevel;
     switch (currentInfo.warnLevel) {
         case 'white':
-            warnLevel = '台风白色预警';
+            warnLevel = t('typhoon.whiteWarn');
             break;
         case 'blue':
-            warnLevel = '台风蓝色预警';
+            warnLevel = t('typhoon.blueWarn');
             break;
         case 'yellow':
-            warnLevel = '台风黄色预警';
+            warnLevel = t('typhoon.yellowWarn');
             break;
         case 'orange':
-            warnLevel = '台风橙色预警';
+            warnLevel = t('typhoon.orangeWarn');
             break;
         case 'red':
-            warnLevel = '台风红色预警';
+            warnLevel = t('typhoon.redWarn');
             break;
         default:
-            warnLevel = '未知预警等级';
+            warnLevel = t('typhoon.unknownWarn');
             break;
     }
     marker.bindTooltip(`
         <strong>${warnLevel}</strong>
         <br>
-        台风名称: ${name} (${nameEn})
+        ${t('typhoon.name')}: ${name} (${nameEn})
         <br>
-        台风编号: ${id}
+        ${t('typhoon.id')}: ${id}
         <br>
-        时间: ${time}
+        ${t('typhoon.time')}: ${time}
         <br>
-        经纬度: (${lat.toFixed(2)}, ${lng.toFixed(2)})
+        ${t('typhoon.latLng')}: (${lat.toFixed(2)}, ${lng.toFixed(2)})
         <br>
-        中心风速: ${windSpeed} m/s (${power}级, ${category})
+        ${t('typhoon.windSpeed')}: ${windSpeed} m/s (${power}${t('common.level')}, ${category})
         <br>
-        中心气压: ${pressure} hpa
+        ${t('typhoon.pressure')}: ${pressure} hpa
         <br>
-        移动速度: ${moveSpeed} km/h
+        ${t('typhoon.moveSpeed')}: ${moveSpeed} km/h
         <br>
-        ${landInfos.join('<br>') || '暂无台风登陆信息'}
+        ${landInfos.join('<br>') || t('typhoon.noLandfallInfo')}
     `, { permanent: false, direction: 'top', className: 'custom-tooltip' });
     return marker;
 };

@@ -10,12 +10,14 @@
             <div class="text" :class="fontClass">{{ formatText(eqMessage.originTimeText) }}</div>
             <div class="text" :class="fontClass">{{ formatText(eqMessage.magnitudeText) }}</div>
             <div class="text" :class="fontClass">{{ formatText(eqMessage.maxIntensityText) }}</div>
-            <div class="text" :class="fontClass">经过时间: {{ formatText(msToTime(passedTimeFromOrigin)) }}</div>
+            <div class="text" :class="fontClass">{{ t('common.elapsed') }}{{ formatText(msToTime(passedTimeFromOrigin)) }}</div>
         </div>
     </div>
 </template>
 
 <script setup>
+import { useI18n } from 'vue-i18n';
+const { t } = useI18n({ useScope: 'global' })
 import { onBeforeUnmount, ref, reactive, computed, watch, inject } from 'vue';
 import { formatText, msToTime, calcPassedTime, judgeSameEvent, calcTimeDiff, formatCsis } from '@/utils/Utils';
 import { EewEvent, EqlistEvent, ignoredIds } from '@/classes/EewEqlistClasses';
@@ -83,7 +85,7 @@ watch(eqMessage, (newVal)=>{
             }
             if(i == activeEewList.length){
                 if(statusStore.map){
-                    if(time > 0 && (settingsStore.actionWhiteListArr.some(key => newVal.hypocenter.includes(key)) || props.source != 'gqEew' 
+                    if(time > 0 && (settingsStore.actionWhiteListArr.some(key => newVal.hypocenter.includes(key)) || props.source != 'gqEew'
                         || (settingsStore.mainSettings.gqActionMag == 0 || newVal.magnitude >= settingsStore.mainSettings.gqActionMag)
                     )) {
                         const newEvent = reactive(new EewEvent(statusStore.map, Object.assign({}, newVal), activeEewList, handleTempEqlists, smartSetView))
@@ -154,13 +156,13 @@ const handleCopy = async () => {
             await navigator.clipboard.writeText(content)
         }
         ElMessage({
-            message: '复制成功',
+            message: t('common.copySuccess'),
             type: 'success'
         })
     } catch (e) {
         console.log(e)
         ElMessage({
-            message: '复制失败',
+            message: t('common.copyFailed'),
             type: 'error'
         })
     }

@@ -9,6 +9,9 @@
 </template>
 
 <script setup>
+import { useI18n } from 'vue-i18n';
+const {t, locale, availableLocales} = useI18n({useScope: 'global'})
+
 import { RouterLink, RouterView } from 'vue-router'
 import { computed, onBeforeMount, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useTimeStore } from './stores/time';
@@ -126,6 +129,9 @@ onBeforeUnmount(() => {
 watch(() => settingsStore.mainSettings, (newValue) => {
   localStorage.setItem('mainSettings', JSON.stringify(newValue))
 }, { deep: true })
+watch(() => settingsStore.mainSettings.locale, (newLocale) => {
+  locale.value = newLocale
+}, { immediate: true })
 watch(() => settingsStore.advancedSettings, (newValue) => {
   localStorage.setItem('advancedSettings', JSON.stringify(newValue))
 }, { deep: true })

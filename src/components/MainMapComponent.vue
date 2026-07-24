@@ -16,13 +16,13 @@
                             }">
                                 <div class="background" :class="event.eqMessage.className"></div>
                                 <div v-if="event.eqMessage.useShindo" class="intensity" :class="event.eqMessage.className">
-                                    <div class="intensity-title">{{ event.eqMessage.intTitle || '推定最大震度' }}</div>
+                                    <div class="intensity-title">{{ event.eqMessage.intTitle || t('map.eew.estimatedMaxShindo') }}</div>
                                     <div :class="formatShindo(event.eqMessage.maxIntensity) != '?'?'shindo':'csis'">
                                         {{ formatShindo(event.eqMessage.maxIntensity) }}
                                     </div>
                                 </div>
                                 <div v-else class="intensity" :class="event.eqMessage.className">
-                                    <div class="intensity-title">{{ event.eqMessage.intTitle || '预估最大烈度' }}</div>
+                                    <div class="intensity-title">{{ event.eqMessage.intTitle || t('map.eew.estimatedMaxIntensity') }}</div>
                                     <div class="csis" :class="{
                                         'roman': settingsStore.mainSettings.useRomanCsis,
                                         'scale-75': event.eqMessage.maxIntensity == '8',
@@ -35,29 +35,29 @@
                                     <div class="location">{{ event.eqMessage.hypocenter }}</div>
                                     <div class="time">{{ event.eqMessage.originTime + ` (${formatTimeZone(event.eqMessage.timeZone)})` }}</div>
                                     <div class="bottom">
-                                        <div class="magnitude">{{ event.eqMessage.isAssumption?'仮定震源要素':'M' + event.eqMessage.magnitude.toFixed(1) }}</div>
+                                        <div class="magnitude">{{ event.eqMessage.isAssumption?t('map.eew.assumedHypocenter'):'M' + event.eqMessage.magnitude.toFixed(1) }}</div>
                                         <div class="depth">{{ event.eqMessage.isAssumption?'':event.eqMessage.depthText }}</div>
                                         <div class="type" v-if="settingsStore.advancedSettings.displayApiType">{{ sourceTypes[event.eqMessage.source][event.eqMessage.type] }}</div>
                                     </div>
                                 </div>
                                 <div class="eew-buttons" v-if="event.showMenu">
-                                    <el-button class="eew-button" type="primary" plain @click="event.mute = !event.mute">{{ event.mute ? '取消静默' : '静默' }}</el-button>
-                                    <el-button class="eew-button" type="danger" plain @click.stop="event.terminate(true)">关闭预警</el-button>
+                                    <el-button class="eew-button" type="primary" plain @click="event.mute = !event.mute">{{ event.mute ? t('map.eew.unmute') : t('map.eew.mute') }}</el-button>
+                                    <el-button class="eew-button" type="danger" plain @click.stop="event.terminate(true)">{{ t('map.eew.closeAlert') }}</el-button>
                                 </div>
                             </div>
                         </div>
                         <div class="countdown eew realtime" v-if="settingsStore.mainSettings.displayCountdown">
                             <div class="shindo-bar" @dblclick="event.showPCountdown = !event.showPCountdown"
-                            :class="event.showPCountdown ? 'blue' 
-                            : event.countdown < 0 || event.eqMessage.isCanceled ? 'gray' 
-                            : event.countdown <= 15 ? 'red' 
-                            : event.countdown <= 60 ? 'orange' 
+                            :class="event.showPCountdown ? 'blue'
+                            : event.countdown < 0 || event.eqMessage.isCanceled ? 'gray'
+                            : event.countdown <= 15 ? 'red'
+                            : event.countdown <= 60 ? 'orange'
                             : 'yellow'">
                                 {{ event.countdown == -1 ? '-' : Math.ceil(event.showPCountdown ? event.pCountdown : event.countdown) }}秒
                             </div>
                             <div class="info" v-if="event.nearestJmaLoc">
                                 <div class="intensity" :class="setClassName(event.userShindo, true, event.eqMessage.isCanceled)">
-                                    <div class="intensity-title">推定本地震度</div>
+                                    <div class="intensity-title">{{ t('map.monitoring.localShindo') }}</div>
                                     <div :class="event.userShindo != '?'?'shindo':'csis'">
                                         {{ event.userShindo }}
                                     </div>
@@ -65,7 +65,7 @@
                             </div>
                             <div class="info" v-else>
                                 <div class="intensity" :class="setClassName(event.userCsis, false, event.eqMessage.isCanceled)">
-                                    <div class="intensity-title">预估本地烈度</div>
+                                    <div class="intensity-title">{{ t('map.monitoring.localIntensity') }}</div>
                                     <div class="csis" :class="{
                                         'roman': settingsStore.mainSettings.useRomanCsis,
                                         'scale-75': event.userCsis == '8',
@@ -89,13 +89,13 @@
                             }">
                                 <div class="background" :class="event.eqMessage.className"></div>
                                 <div v-if="event.eqMessage.useShindo" class="intensity" :class="event.eqMessage.className">
-                                    <div class="intensity-title">{{ event.eqMessage.intTitle || '最大震度' }}</div>
+                                    <div class="intensity-title">{{ event.eqMessage.intTitle || t('map.monitoring.maxShindo') }}</div>
                                     <div :class="formatShindo(event.eqMessage.maxIntensity) != '?'?'shindo':'csis'">
                                         {{ formatShindo(event.eqMessage.maxIntensity) }}
                                     </div>
                                 </div>
                                 <div v-else class="intensity" :class="event.eqMessage.className">
-                                    <div class="intensity-title">{{ event.eqMessage.intTitle || '预估最大烈度' }}</div>
+                                    <div class="intensity-title">{{ event.eqMessage.intTitle || t('map.eew.estimatedMaxIntensity') }}</div>
                                     <div class="csis" :class="{
                                         'roman': settingsStore.mainSettings.useRomanCsis,
                                         'scale-75': event.eqMessage.maxIntensity == '8',
@@ -105,19 +105,19 @@
                                     </div>
                                 </div>
                                 <div class="right">
-                                    <div class="location">{{ event.eqMessage.hypocenter || '震源 調査中' }}</div>
+                                    <div class="location">{{ event.eqMessage.hypocenter || t('map.eew.hypocenterUnknown') }}</div>
                                     <div class="time">{{ event.eqMessage.originTime + ` (${formatTimeZone(event.eqMessage.timeZone)})` }}</div>
                                     <div class="bottom">
-                                        <div class="magnitude">{{ event.eqMessage.magnitude != -1 ? 'M' + event.eqMessage.magnitude.toFixed(1) : '規模 調査中' }}</div>
+                                        <div class="magnitude">{{ event.eqMessage.magnitude != -1 ? 'M' + event.eqMessage.magnitude.toFixed(1) : t('map.eew.magnitudeUnknown') }}</div>
                                         <div class="depth">{{ event.eqMessage.depth != -1 ? event.eqMessage.depthText : '' }}</div>
                                         <div class="type" v-if="settingsStore.advancedSettings.displayApiType">{{ sourceTypes[event.eqMessage.source][event.eqMessage.type] }}</div>
                                     </div>
                                 </div>
                                 <div class="eew-buttons" v-if="event.showMenu">
-                                    <el-button 
-                                    class="eew-button" 
-                                    type="danger" 
-                                    plain 
+                                    <el-button
+                                    class="eew-button"
+                                    type="danger"
+                                    plain
                                     :disabled="!event.isActive"
                                     @click.stop="() => {
                                         if(tempEqlists == event.eqMessage.source) {
@@ -125,7 +125,7 @@
                                         }
                                         event.deactivate()
                                     }"
-                                    >关闭信息</el-button>
+                                    >{{ t('map.eew.closeInfo') }}</el-button>
                                 </div>
                             </div>
                         </div>
@@ -138,16 +138,16 @@
                             <div class="tsunami-info" v-if="cnTsunamiBaseMap">
                                 <div class="background" :class="statusStore.tsunamiMessage.nmefcTsunami.className"></div>
                                 <div v-show="statusStore.tsunamiMessage.nmefcTsunami.status >= 3" class="legend tsunami-purple"></div>
-                                <div v-show="statusStore.tsunamiMessage.nmefcTsunami.status >= 3" class="text">大海啸警报</div>
+                                <div v-show="statusStore.tsunamiMessage.nmefcTsunami.status >= 3" class="text">{{ t('map.tsunami.majorWarning') }}</div>
                                 <div v-show="statusStore.tsunamiMessage.nmefcTsunami.status >= 2" class="legend tsunami-red"></div>
-                                <div v-show="statusStore.tsunamiMessage.nmefcTsunami.status >= 2" class="text">海啸警报</div>
+                                <div v-show="statusStore.tsunamiMessage.nmefcTsunami.status >= 2" class="text">{{ t('map.tsunami.warning') }}</div>
                                 <div v-show="statusStore.tsunamiMessage.nmefcTsunami.status >= 1" class="legend tsunami-yellow"></div>
-                                <div v-show="statusStore.tsunamiMessage.nmefcTsunami.status >= 1" class="text">海啸注意报</div>
+                                <div v-show="statusStore.tsunamiMessage.nmefcTsunami.status >= 1" class="text">{{ t('map.tsunami.advisory') }}</div>
                             </div>
                             <div class="tsunami-info" v-else>
                                 <div class="background" :class="statusStore.tsunamiMessage.nmefcTsunami.className"></div>
-                                <div class="text" style="justify-self: end; text-align: right;">无地图显示</div>
-                                <div class="text">请查看侧栏信息</div>
+                                <div class="text" style="justify-self: end; text-align: right;">{{ t('map.tsunami.noMapDisplay') }}</div>
+                                <div class="text">{{ t('map.tsunami.checkSidebar') }}</div>
                             </div>
                         </div>
                     </div>
@@ -159,20 +159,20 @@
                             <div class="tsunami-info">
                                 <div class="background" :class="statusStore.tsunamiMessage.jmaTsunami.className"></div>
                                 <div v-show="statusStore.tsunamiMessage.jmaTsunami.status >= 3" class="legend tsunami-purple"></div>
-                                <div v-show="statusStore.tsunamiMessage.jmaTsunami.status >= 3" class="text">大津波警報</div>
+                                <div v-show="statusStore.tsunamiMessage.jmaTsunami.status >= 3" class="text">{{ t('map.tsunami.majorWarningJp') }}</div>
                                 <div v-show="statusStore.tsunamiMessage.jmaTsunami.status >= 2" class="legend tsunami-red"></div>
-                                <div v-show="statusStore.tsunamiMessage.jmaTsunami.status >= 2" class="text">津波警報</div>
+                                <div v-show="statusStore.tsunamiMessage.jmaTsunami.status >= 2" class="text">{{ t('map.tsunami.warningJp') }}</div>
                                 <div v-show="statusStore.tsunamiMessage.jmaTsunami.status >= 1" class="legend tsunami-yellow"></div>
-                                <div v-show="statusStore.tsunamiMessage.jmaTsunami.status >= 1" class="text">津波注意報</div>
+                                <div v-show="statusStore.tsunamiMessage.jmaTsunami.status >= 1" class="text">{{ t('map.tsunami.advisoryJp') }}</div>
                             </div>
                         </div>
                     </div>
                     <div class="event">
                         <div class="eew realtime" v-if="settingsStore.mainSettings.displaySeisNet.displayMaxInt && settingsStore.mainSettings.displaySeisNet.niedNet && settingsStore.mainSettings.displaySeisNet.displayNiedShindo">
-                            <div class="shindo-bar gray">NIED实时</div>
+                            <div class="shindo-bar gray">{{ t('map.monitoring.niedRealtime') }}</div>
                             <div class="info">
                                 <div class="intensity" :class="setClassName(niedMaxShindo, true)">
-                                    <div class="intensity-title">最大震度</div>
+                                    <div class="intensity-title">{{ t('map.monitoring.maxShindo') }}</div>
                                     <div :class="niedMaxShindo != '?'?'shindo':'csis'">
                                         {{ niedMaxShindo }}
                                     </div>
@@ -180,10 +180,10 @@
                             </div>
                         </div>
                         <div class="eew realtime" v-if="settingsStore.mainSettings.displaySeisNet.displayPeriodMaxInt && settingsStore.mainSettings.displaySeisNet.niedNet && settingsStore.mainSettings.displaySeisNet.displayNiedShindo && niedPeriodMaxShindo != '?'">
-                            <div class="shindo-bar" :class="niedPeriodBarClass">NIED区间</div>
+                            <div class="shindo-bar" :class="niedPeriodBarClass">{{ t('map.monitoring.niedInterval') }}</div>
                             <div class="info">
                                 <div class="intensity" :class="setClassName(niedPeriodMaxShindo, true)">
-                                    <div class="intensity-title">最大震度</div>
+                                    <div class="intensity-title">{{ t('map.monitoring.maxShindo') }}</div>
                                     <div :class="niedPeriodMaxShindo != '?'?'shindo':'csis'">
                                         {{ niedPeriodMaxShindo }}
                                     </div>
@@ -191,10 +191,10 @@
                             </div>
                         </div>
                         <div class="eew realtime" v-if="settingsStore.mainSettings.displaySeisNet.displayMaxInt && settingsStore.mainSettings.displaySeisNet.tremNet && settingsStore.mainSettings.displaySeisNet.displayTremShindo">
-                            <div class="shindo-bar gray">TREM实时</div>
+                            <div class="shindo-bar gray">{{ t('map.monitoring.tremRealtime') }}</div>
                             <div class="info">
                                 <div class="intensity" :class="setClassName(tremMaxShindo, true)">
-                                    <div class="intensity-title">最大震度</div>
+                                    <div class="intensity-title">{{ t('map.monitoring.maxShindo') }}</div>
                                     <div :class="tremMaxShindo != '?'?'shindo':'csis'">
                                         {{ tremMaxShindo }}
                                     </div>
@@ -202,10 +202,10 @@
                             </div>
                         </div>
                         <div class="eew realtime" v-if="settingsStore.mainSettings.displaySeisNet.displayPeriodMaxInt && settingsStore.mainSettings.displaySeisNet.tremNet && settingsStore.mainSettings.displaySeisNet.displayTremShindo && tremPeriodMaxShindo != '?'">
-                            <div class="shindo-bar" :class="tremPeriodBarClass">TREM区间</div>
+                            <div class="shindo-bar" :class="tremPeriodBarClass">{{ t('map.monitoring.tremInterval') }}</div>
                             <div class="info">
                                 <div class="intensity" :class="setClassName(tremPeriodMaxShindo, true)">
-                                    <div class="intensity-title">最大震度</div>
+                                    <div class="intensity-title">{{ t('map.monitoring.maxShindo') }}</div>
                                     <div :class="tremPeriodMaxShindo != '?'?'shindo':'csis'">
                                         {{ tremPeriodMaxShindo }}
                                     </div>
@@ -213,10 +213,10 @@
                             </div>
                         </div>
                         <div class="eew realtime" v-if="settingsStore.mainSettings.displaySeisNet.displayMaxInt && settingsStore.mainSettings.displaySeisNet.kmaNet && settingsStore.mainSettings.displaySeisNet.displayKmaInt">
-                            <div class="shindo-bar gray">KMA实时</div>
+                            <div class="shindo-bar gray">{{ t('map.monitoring.kmaRealtime') }}</div>
                             <div class="info">
                                 <div class="intensity" :class="setClassName(kmaMaxInt, false)">
-                                    <div class="intensity-title">最大烈度</div>
+                                    <div class="intensity-title">{{ t('map.monitoring.maxIntensity') }}</div>
                                     <div class="csis" :class="{
                                         'roman': settingsStore.mainSettings.useRomanCsis,
                                         'scale-75': kmaMaxInt == '8',
@@ -228,10 +228,10 @@
                             </div>
                         </div>
                         <div class="eew realtime" v-if="settingsStore.mainSettings.displaySeisNet.displayPeriodMaxInt && settingsStore.mainSettings.displaySeisNet.kmaNet && settingsStore.mainSettings.displaySeisNet.displayKmaInt && kmaPeriodMaxInt != '?'">
-                            <div class="shindo-bar" :class="kmaPeriodBarClass">KMA区间</div>
+                            <div class="shindo-bar" :class="kmaPeriodBarClass">{{ t('map.monitoring.kmaInterval') }}</div>
                             <div class="info">
                                 <div class="intensity" :class="setClassName(kmaPeriodMaxInt, false)">
-                                    <div class="intensity-title">最大烈度</div>
+                                    <div class="intensity-title">{{ t('map.monitoring.maxIntensity') }}</div>
                                     <div class="csis" :class="{
                                         'roman': settingsStore.mainSettings.useRomanCsis,
                                         'scale-75': kmaPeriodMaxInt == '8',
@@ -252,27 +252,27 @@
                             <div class="align-left">{{ shindoArray[index] }}</div>
                         </div>
                         <div class="sub-title single-legend">
-                            <div class="align-right">烈度</div>
+                            <div class="align-right">{{ t('map.legend.intensity') }}</div>
                             <div class="color"></div>
-                            <div class="align-left">震度</div>
+                            <div class="align-left">{{ t('map.legend.shindo') }}</div>
                         </div>
-                        <div class="legend-title">地图颜色</div>
+                        <div class="legend-title">{{ t('map.legend.mapColor') }}</div>
                     </div>
                     <div class="ws-status">
-                        <div>WebSocket状态: </div>
+                        <div>{{ t('map.websocket.status') }}</div>
                         <div :class="'s' + wolfxRS">Wolfx{{ wolfxUrlIndex ? '(B)' : '' }}</div>
                         <div :class="'s' + fanRS">FAN{{ fanUrlIndex ? '(B)' : '' }}</div>
                         <div :class="'s' + p2pquakeRS">P2PQ{{ p2pquakeUrlIndex ? '(B)' : '' }}</div>
                         <div v-if="settingsStore.advancedSettings.enableGqEew" :class="'s' + gqRS">GQ{{ gqUrlIndex ? '(B)' : '' }}</div>
                     </div>
                     <div class="update-time" :class="settingsStore.mainSettings.displaySeisNet.delay > 0 ? 'replay' : isNiedDelayed ? 'delayed' : ''" v-if="settingsStore.mainSettings.displaySeisNet.niedNet" @dblclick="resetSeisNetDelay">
-                        強震モニタ: {{ niedUpdateTime }} (UTC+9)
+                        {{ t('map.monitoring.niedStatus') }} {{ niedUpdateTime }} (UTC+9)
                     </div>
                     <div class="update-time" :class="settingsStore.mainSettings.displaySeisNet.delay > 0 ? 'replay' : isTremDelayed ? 'delayed' : ''" v-if="settingsStore.mainSettings.displaySeisNet.tremNet" @dblclick="resetSeisNetDelay">
-                        TREM-Net : {{ tremUpdateTime }} (UTC+8)
+                        {{ t('map.monitoring.tremStatus') }} {{ tremUpdateTime }} (UTC+8)
                     </div>
                     <div class="update-time" :class="isKmaDelayed ? 'delayed' : ''" v-if="settingsStore.mainSettings.displaySeisNet.kmaNet" @dblclick="resetSeisNetDelay">
-                        KMA-PEWS: {{ kmaUpdateTime }} (UTC+9)
+                        {{ t('map.monitoring.kmaStatus') }} {{ kmaUpdateTime }} (UTC+9)
                     </div>
                 </div>
                 <div class="int-list" v-if="settingsStore.mainSettings.displayAreaIntensities">
@@ -297,7 +297,7 @@
                     </div>
                 </div>
                 <div class="bottom-right">
-                    <div class="mocking" v-if="statusStore.isActive.mockEew" :class="blinkStatus ? 'mock-1' : 'mock-0'">模拟预警中</div>
+                    <div class="mocking" v-if="statusStore.isActive.mockEew" :class="blinkStatus ? 'mock-1' : 'mock-0'">{{ t('map.mocking') }}</div>
                     <el-button
                     class="home"
                     :icon="HomeFilled"
@@ -345,6 +345,9 @@
 </template>
 
 <script setup>
+
+import { useI18n } from 'vue-i18n';
+const { t } = useI18n({ useScope: 'global' })
 import L from 'leaflet';
 import 'leaflet.vectorgrid';
 import 'leaflet/dist/leaflet.css';
@@ -878,7 +881,7 @@ const loadMaps = async (retries = 0) => {
     if(!firstMsg){
         msgTimer = setTimeout(() => {
             ElMessage({
-                message: '正在加载地图，请稍候…',
+                message: t('common.loading'),
                 duration: 5000
             })
             firstMsg = true
@@ -899,7 +902,7 @@ const loadMaps = async (retries = 0) => {
         loadBaseMap(global, 'basePane')
         loadBaseMap(jp, 'basePane')
         loadBaseMap(cn, 'basePane')
-        jpEewBaseMap = settingsStore.mainSettings.disableEewBaseMap 
+        jpEewBaseMap = settingsStore.mainSettings.disableEewBaseMap
         ? null : loadBaseMap(jp_eew, 'eewBasePane', false, {
             color: eewBaseMapDefaultStroke,
             opacity: 1,
@@ -907,7 +910,7 @@ const loadMaps = async (retries = 0) => {
             fillOpacity: 1,
             weight: 1,
         }, eewBaseGroup)
-        krEewBaseMap = settingsStore.mainSettings.disableEewBaseMap 
+        krEewBaseMap = settingsStore.mainSettings.disableEewBaseMap
         ? null : loadBaseMap(kr_eew, 'eewBasePane', false, {
             color: eewBaseMapDefaultStroke,
             opacity: 1,
@@ -915,7 +918,7 @@ const loadMaps = async (retries = 0) => {
             fillOpacity: 1,
             weight: 1,
         }, eewBaseGroup)
-        cnEewBaseMap = settingsStore.mainSettings.disableEewBaseMap 
+        cnEewBaseMap = settingsStore.mainSettings.disableEewBaseMap
         ? null : loadBaseMap(cn_eew, 'eewBasePane', false, {
             color: eewBaseMapDefaultStroke,
             opacity: 1,
@@ -1116,7 +1119,7 @@ const loadMaps = async (retries = 0) => {
         }
         else {
             ElMessage({
-                message: '地图加载失败，请稍后重试！',
+                message: t('common.loading'),
                 type: 'error',
                 duration: 5000
             })
@@ -2026,7 +2029,7 @@ onBeforeUnmount(()=>{
             z-index: 600;
             background-color: #fff;
         }
-        
+
         .dialog-fade-enter-active {
             transition: all 0.5s ease-out;
         }
