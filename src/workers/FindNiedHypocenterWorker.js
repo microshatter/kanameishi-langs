@@ -1,13 +1,20 @@
 import { FindNiedHypocenter } from '@/classes/NiedHypoInf'
+import { mergeNiedHypocenterUpdates } from '@/utils/NiedHypocenterUpdates'
 
 let finder = null
 let pendingUpdate = null
 let processingScheduled = false
 let workerVersion = 0
+let adjStations = null
 
 self.onmessage = event => {
     const message = event.data || {}
     const { type, requestId } = message
+
+    if(type === 'init') {
+        adjStations = message.adjStations
+        return
+    }
 
     if(type === 'reset') {
         workerVersion++
@@ -20,25 +27,8 @@ self.onmessage = event => {
 
     if(type !== 'update') return
 
-    pendingUpdate = mergePendingUpdate(pendingUpdate, message)
+    pendingUpdate = mergeNiedHypocenterUpdates(pendingUpdate, message)
     schedulePendingUpdate()
-}
-
-const mergePendingUpdate = (previousUpdate, nextUpdate) => {
-    if(!previousUpdate) return nextUpdate
-    return {
-        ...nextUpdate,
-        newActiveStations: mergeStationsById(previousUpdate.newActiveStations, nextUpdate.newActiveStations)
-    }
-}
-
-const mergeStationsById = (...stationLists) => {
-    const stationMap = new Map()
-    stationLists.flatMap(stations => stations || [])
-        .forEach(station => {
-            if(station?.id !== undefined) stationMap.set(station.id, station)
-        })
-    return [...stationMap.values()]
 }
 
 const schedulePendingUpdate = () => {
@@ -57,17 +47,16 @@ const processPendingUpdate = scheduledVersion => {
 
     const {
         requestId,
-        newActiveStations = [],
+        pickCandidates = [],
         activeStations = [],
-        inactiveStations = [],
-        adjStationIds
+        inactiveStations = []
     } = message
 
     if(!finder) {
-        finder = new FindNiedHypocenter(inactiveStations, adjStationIds)
+        finder = new FindNiedHypocenter(inactiveStations, adjStations)
     }
 
-    const results = finder.update(newActiveStations, inactiveStations, activeStations)
+    const results = finder.update(pickCandidates, inactiveStations, activeStations)
     if(scheduledVersion !== workerVersion) return
     self.postMessage({ requestId, results })
 

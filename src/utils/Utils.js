@@ -19,6 +19,8 @@ dayjs.extend(timezone);
 let timeStore;
 let settingsStore;
 
+export const systemTimeZone = -new Date().getTimezoneOffset() / 60;
+
 const EARTH_RADIUS_KM = 6371.0088;
 const toRadians = degrees => (degrees * Math.PI) / 180;
 const toDegrees = radians => (radians * 180) / Math.PI;
@@ -88,19 +90,30 @@ export const stampToTime = (timeStamp, timeZone) => {
     .replace("T", " ")
     .slice(0, -5);
 };
+export const convertTimeString = (
+  time,
+  sourceTimeZone,
+  targetTimeZone = systemTimeZone,
+) => stampToTime(timeToStamp(time, sourceTimeZone), targetTimeZone);
 export const calcPassedTime = (time, timeZone) => {
-  if (!time || !timeZone) return;
+  if (!time || !Number.isFinite(timeZone)) return;
   if (!timeStore) timeStore = useTimeStore();
   let stamp1 = timeStore.getTimeStamp();
   let stamp2 = timeToStamp(time, timeZone);
   return stamp1 - stamp2;
 };
 export const verifyUpToDate = (time, timeZone, interval) => {
-  if (!time || !timeZone || !interval) return;
+  if (!time || !Number.isFinite(timeZone) || !interval) return;
   return calcPassedTime(time, timeZone) <= interval;
 };
 export const calcTimeDiff = (time1, timeZone1, time2, timeZone2) => {
-  if (!time1 || !timeZone1 || !time2 || !timeZone2) return;
+  if (
+    !time1 ||
+    !Number.isFinite(timeZone1) ||
+    !time2 ||
+    !Number.isFinite(timeZone2)
+  )
+    return;
   let stamp1 = timeToStamp(time1, timeZone1);
   let stamp2 = timeToStamp(time2, timeZone2);
   return stamp1 - stamp2;
@@ -260,12 +273,29 @@ export const playSound = type => {
   const audio = new Audio(url);
   audio.volume = settingsStore.mainSettings.masterVolume / 100;
   audio.play().catch(async _ => {
-    const response = await fetch(url);
-    const blob = await response.blob();
-    const objectUrl = URL.createObjectURL(blob);
-    const audio = new Audio(objectUrl);
-    audio.volume = settingsStore.mainSettings.masterVolume / 100;
-    audio.play().catch(_ => console.log("不支持的音频"));
+    let objectUrl;
+    let fallbackAudio;
+    let objectUrlRevoked = false;
+    const revokeObjectUrl = () => {
+      if (!objectUrl || objectUrlRevoked) return;
+      objectUrlRevoked = true;
+      fallbackAudio?.removeEventListener("ended", revokeObjectUrl);
+      fallbackAudio?.removeEventListener("error", revokeObjectUrl);
+      URL.revokeObjectURL(objectUrl);
+    };
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      objectUrl = URL.createObjectURL(blob);
+      fallbackAudio = new Audio(objectUrl);
+      fallbackAudio.volume = settingsStore.mainSettings.masterVolume / 100;
+      fallbackAudio.addEventListener("ended", revokeObjectUrl, { once: true });
+      fallbackAudio.addEventListener("error", revokeObjectUrl, { once: true });
+      await fallbackAudio.play();
+    } catch (_) {
+      revokeObjectUrl();
+      console.log("不支持的音频");
+    }
   });
 };
 export const calcWaveDistance = (travelTime, isPWave, depth, time) => {

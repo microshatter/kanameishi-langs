@@ -2,27 +2,16 @@ import { defineStore } from 'pinia';
 import merge from 'lodash/merge';
 import { jmaSeisIntLoc } from '@/utils/JmaSeisIntLoc';
 import { calcDistanceKm } from '@/utils/Utils';
+import { createDefaultDataSources, dataSourceCatalog, migrateLegacyDataSources } from '@/utils/DataSources';
+import { legacyAccessSettingKeys, useAccessStore } from './access';
 
 export const useSettingsStore = defineStore('settingsStore', {
     state: ()=>({
         mainSettings: {
-            source: {
-                jmaEew: false,
-                cwaEew: true,
-                ceaEew: true,
-                iclEew: false,
-                scEew: true,
-                fjEew: true,
-                kmaEew: false,
-                gqEew: false,
-                jmaEqlist: false,
-                cwaEqlist: true,
-                cencEqlist: true,
-                kmaEqlist: false,
-                usgsEqlist: false,
-                fssnEqlist: false,
-                jmaTsunami: false,
-                nmefcTsunami: true,
+            dataSources: createDefaultDataSources(),
+            provinceCeaEew: false,
+            apiKeys: {
+                fanApiKey: ''
             },
             displaySeisNet: {
                 style: 'nied',
@@ -102,6 +91,7 @@ export const useSettingsStore = defineStore('settingsStore', {
             uiScale: 1,
             displayPlaceName: false,
             placeNameOnHover: false,
+            displayClock: false,
             displayCnFault: false,
             displayTerminator: false,
             useRomanCsis: true,
@@ -127,24 +117,13 @@ export const useSettingsStore = defineStore('settingsStore', {
             locale: 'zh-CN',
         },
         advancedSettings: {
-            enableIclEew: false,
-            enableTremFunctions: false,
-            enableGqEew: false,
-            enableNmefcTsunami: false,
-            enableMultiApi: false,
-            provinceCeaEew: false,
             defaultFanServer: 0,
-            tokens: {
-                fanApiKey: ''
-            },
-            multiApi: false,
             displayApiType: false,
             forceCalcInt: false,
             useClassicMapLoader: false,
             preventFlickerMode: false,
             mockEew: false,
             mockOnReplay: false,
-            advancedHypoInf: false,
             fallbackSvgStationRender: false
         }
     }),
@@ -170,19 +149,117 @@ export const useSettingsStore = defineStore('settingsStore', {
             }
             return nearestLoc
         },
-        actionWhiteListArr: (state) => state.mainSettings.actionWhiteList.split('|').filter(key => key)
+        actionWhiteListArr: (state) => state.mainSettings.actionWhiteList.split('|').filter(key => key),
+        isDataSourceAvailable: () => source => {
+            const requiredCapability = dataSourceCatalog[source]?.requiredCapability
+            return !requiredCapability || useAccessStore().canUse(requiredCapability)
+        },
+        isDataSourceEnabled(state) {
+            return source => this.isDataSourceAvailable(source)
+                && Object.values(state.mainSettings.dataSources[source] || {}).some(Boolean)
+        },
+        isDataSourceFullyEnabled(state) {
+            return source => {
+                if(!this.isDataSourceAvailable(source)) return false
+                const apis = Object.values(state.mainSettings.dataSources[source] || {})
+                return apis.length > 0 && apis.every(Boolean)
+            }
+        },
+        isDataSourcePartiallyEnabled(state) {
+            return source => {
+                if(!this.isDataSourceAvailable(source)) return false
+                const apis = Object.values(state.mainSettings.dataSources[source] || {})
+                return apis.some(Boolean) && !apis.every(Boolean)
+            }
+        },
+        effectiveDataSources(state) {
+            return Object.fromEntries(Object.entries(dataSourceCatalog).map(([source, config]) => [
+                source,
+                Object.fromEntries(config.apis.map(api => [
+                    api,
+                    this.isDataSourceAvailable(source)
+                        && Boolean(state.mainSettings.dataSources[source]?.[api]),
+                ])),
+            ]))
+        },
+        effectiveNiedHypoInfTextInfo(state) {
+            const mode = Number(state.mainSettings.displaySeisNet.niedHypoInfTextInfo)
+            return useAccessStore().canUse('advancedHypoInf') ? mode : Math.min(mode, 1)
+        },
+        enabledDataSources() {
+            return Object.entries(this.effectiveDataSources)
+                .filter(([, apis]) => Object.values(apis).some(Boolean))
+                .map(([source]) => source)
+        },
     },
     actions: {
+        resetUnauthorizedFeatureSettings() {
+            const accessStore = useAccessStore()
+            if(!accessStore.canUse('iclEew')) {
+                this.setDataSourceEnabled('iclEew', false)
+            }
+            if(!accessStore.canUse('gqEew')) {
+                this.setDataSourceEnabled('gqEew', false)
+            }
+            if(!accessStore.canUse('tremFunctions')) {
+                this.mainSettings.displaySeisNet.tremNet = false
+            }
+            if(
+                !accessStore.canUse('advancedHypoInf') &&
+                Number(this.mainSettings.displaySeisNet.niedHypoInfTextInfo) > 1
+            ) {
+                this.mainSettings.displaySeisNet.niedHypoInfTextInfo = 1
+            }
+        },
+        setDataSourceEnabled(source, enabled) {
+            const apis = this.mainSettings.dataSources[source]
+            if(!apis) return
+            if(enabled && !this.isDataSourceAvailable(source)) return
+            Object.keys(apis).forEach(api => {
+                apis[api] = enabled
+            })
+        },
         setMainSettings(jsonString){
             if(jsonString){
                 const json = JSON.parse(jsonString)
+                if(!json.dataSources && json.source) {
+                    json.dataSources = migrateLegacyDataSources(json.source)
+                }
+                delete json.dataSources?.cwaEqlist?.trem
+                delete json.dataSources?.iclEew?.lipo
+                delete json.source
                 if(json.historySources) this.mainSettings.historySources = []
                 merge(this.mainSettings, json)
             }
         },
         setAdvancedSettings(jsonString){
             if(jsonString){
-                merge(this.advancedSettings, JSON.parse(jsonString))
+                const json = JSON.parse(jsonString)
+                let migrated = false
+                // TODO(access-settings-migration): Remove with the legacy fallback in accessStore.
+                legacyAccessSettingKeys.forEach(key => {
+                    if(key in json) {
+                        delete json[key]
+                        migrated = true
+                    }
+                })
+                if('provinceCeaEew' in json) {
+                    this.mainSettings.provinceCeaEew = Boolean(json.provinceCeaEew)
+                    delete json.provinceCeaEew
+                    migrated = true
+                }
+                if('tokens' in json) {
+                    delete json.tokens
+                    migrated = true
+                }
+                if('enableMultiApi' in json || 'multiApi' in json) {
+                    delete json.enableMultiApi
+                    delete json.multiApi
+                    localStorage.removeItem('multiApi')
+                    migrated = true
+                }
+                if(migrated) localStorage.setItem('advancedSettings', JSON.stringify(json))
+                merge(this.advancedSettings, json)
             }
         },
     }

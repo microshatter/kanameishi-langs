@@ -304,46 +304,97 @@ export class NiedStation {
         if (arr.length === 0) {
             return { ascend: 0, triggerStamp: 0 };
         }
-        let i = 0;
-        fillNan: while (i < arr.length) {
-            if (arr[i] === -1) {
-                let nanCount = 1;
-                let nextValidIndex = i + 1;
-                while (nextValidIndex < arr.length && arr[nextValidIndex] === -1) {
-                    nanCount++;
-                    if (nanCount > this.expireSeconds) {
-                        arr.splice(i);
-                        break fillNan;
-                    }
-                    nextValidIndex++;
+        const triggerSourceIndexes = this.recentLevel.map((level, index) => level === -1 ? -1 : index);
+        const maxShortValleyLength = 2;
+        // Resolve missing values before measuring short valleys.
+        let segmentStartIndex = 0;
+        while(segmentStartIndex < arr.length) {
+            if(this.recentLevel[segmentStartIndex] > 0) {
+                segmentStartIndex++;
+                continue;
+            }
+            let segmentEndIndex = segmentStartIndex + 1;
+            while(segmentEndIndex < arr.length && this.recentLevel[segmentEndIndex] <= 0) {
+                segmentEndIndex++;
+            }
+
+            let missingStartIndex = segmentStartIndex;
+            let truncated = false;
+            while(missingStartIndex < segmentEndIndex) {
+                if(this.recentLevel[missingStartIndex] !== -1) {
+                    missingStartIndex++;
+                    continue;
                 }
-                if (nextValidIndex < arr.length) {
-                    arr[i] = arr[nextValidIndex];
-                    i++;
-                } else {
-                    arr.splice(i);
+                let missingEndIndex = missingStartIndex + 1;
+                while(missingEndIndex < segmentEndIndex && this.recentLevel[missingEndIndex] === -1) {
+                    missingEndIndex++;
+                }
+                const missingLength = missingEndIndex - missingStartIndex;
+                if(missingLength > this.expireSeconds || missingEndIndex >= arr.length) {
+                    arr.splice(missingStartIndex);
+                    triggerSourceIndexes.splice(missingStartIndex);
+                    truncated = true;
                     break;
                 }
-            } else {
-                i++;
+                arr.fill(this.recentLevel[missingEndIndex], missingStartIndex, missingEndIndex);
+                missingStartIndex = missingEndIndex;
             }
+            if(truncated) break;
+            segmentStartIndex = segmentEndIndex;
         }
         if (arr.length === 0) {
             return { ascend: 0, triggerStamp: 0 };
         }
 
+        let levelSegmentStartIndex = 0;
+        while(levelSegmentStartIndex < arr.length) {
+            const segmentLevel = arr[levelSegmentStartIndex];
+            let levelSegmentEndIndex = levelSegmentStartIndex + 1;
+            while(levelSegmentEndIndex < arr.length && arr[levelSegmentEndIndex] === segmentLevel) {
+                levelSegmentEndIndex++;
+            }
+            const segmentLength = levelSegmentEndIndex - levelSegmentStartIndex;
+            const newerSideLevel = arr[levelSegmentStartIndex - 1];
+            const olderSideLevel = arr[levelSegmentEndIndex];
+            const isShortDeepValley =
+                levelSegmentStartIndex > 0 &&
+                levelSegmentEndIndex < arr.length &&
+                segmentLength <= maxShortValleyLength &&
+                segmentLevel <= Math.min(newerSideLevel, olderSideLevel) - 2;
+            if(isShortDeepValley) {
+                arr.fill(olderSideLevel, levelSegmentStartIndex, levelSegmentEndIndex);
+                triggerSourceIndexes.fill(-1, levelSegmentStartIndex, levelSegmentEndIndex);
+            }
+            levelSegmentStartIndex = levelSegmentEndIndex;
+        }
+
         let latestMinVal = arr[0];
         let latestMinIndex = 0;
         let identicalCount = 1;
+        let shallowValleyMinVal = null;
+        let shallowValleyMinIndex = -1;
         for (let i = 0; i < arr.length - 1; i++) {
             const current = arr[i];
             const next = arr[i + 1];
             if (next < current) {
-                latestMinVal = next;
-                latestMinIndex = i + 1;
+                if(shallowValleyMinVal === null || next < shallowValleyMinVal) {
+                    latestMinVal = next;
+                    latestMinIndex = i + 1;
+                    shallowValleyMinVal = null;
+                    shallowValleyMinIndex = -1;
+                }
                 identicalCount = 1;
             } else if (next > current) {
-                break;
+                if(shallowValleyMinVal === null) {
+                    shallowValleyMinVal = latestMinVal;
+                    shallowValleyMinIndex = latestMinIndex;
+                }
+                if(next - shallowValleyMinVal > 1) {
+                    latestMinVal = shallowValleyMinVal;
+                    latestMinIndex = shallowValleyMinIndex;
+                    break;
+                }
+                identicalCount = 1;
             } else {
                 identicalCount++;
                 if (identicalCount > this.expireSeconds) {
@@ -351,9 +402,10 @@ export class NiedStation {
                 }
             }
         }
-        const ascend = this.level - latestMinVal;
-        const triggerStamp = ascend > 0 && this.recentLevel[latestMinIndex] !== -1
-            ? this.updateStamp - latestMinIndex * 1000
+        const ascend = Math.max(this.level - latestMinVal, 0);
+        const triggerSourceIndex = triggerSourceIndexes[latestMinIndex];
+        const triggerStamp = ascend > 0 && triggerSourceIndex >= 0
+            ? this.updateStamp - triggerSourceIndex * 1000
             : 0;
         return { ascend, triggerStamp };
     }

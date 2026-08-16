@@ -17,6 +17,7 @@ import { computed, onBeforeMount, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useTimeStore } from './stores/time';
 import { useStatusStore } from '@/stores/status';
 import { useSettingsStore } from './stores/settings';
+import { useAccessStore } from './stores/access';
 import { eqUrls, topojsonUrls } from './utils/Urls';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { platform } from '@tauri-apps/plugin-os';
@@ -28,6 +29,7 @@ import { APP_TITLE } from '@/utils/AppInfo';
 const timeStore = useTimeStore()
 const statusStore = useStatusStore()
 const settingsStore = useSettingsStore()
+const accessStore = useAccessStore()
 const inTauri = isTauri()
 
 const container = ref()
@@ -82,15 +84,18 @@ const history2Eqlist = {
 
 onBeforeMount(async () => {
   document.title = APP_TITLE
+  const advancedSettings = localStorage.getItem('advancedSettings')
   settingsStore.setMainSettings(localStorage.getItem('mainSettings'))
-  settingsStore.setAdvancedSettings(localStorage.getItem('advancedSettings'))
+  // Restore legacy access fields first; setAdvancedSettings removes them afterward.
+  accessStore.setAccessSettings(localStorage.getItem('accessSettings'), advancedSettings)
+  settingsStore.setAdvancedSettings(advancedSettings)
+  settingsStore.resetUnauthorizedFeatureSettings()
   settingsStore.mainSettings.displaySeisNet.delay = 0
-  if(settingsStore.advancedSettings.multiApi) Object.assign(eqUrls, JSON.parse(localStorage.getItem('multiApi')))
-  if(settingsStore.advancedSettings.enableNmefcTsunami) Object.assign(topojsonUrls, JSON.parse(localStorage.getItem('nmefcTsunami')))
+  if(accessStore.canUse('gqEew')) Object.assign(eqUrls, JSON.parse(localStorage.getItem('gqUrl')))
+  if(accessStore.canUse('nmefcTsunamiMap')) Object.assign(topojsonUrls, JSON.parse(localStorage.getItem('nmefcTsunami')))
   timeStore.startUpdatingTime()
-  statusStore.enabledSource = Object.keys(settingsStore.mainSettings.source).filter(source => settingsStore.mainSettings.source[source])
+  statusStore.configureDataSources(settingsStore.effectiveDataSources)
   settingsStore.mainSettings.historySources = settingsStore.mainSettings.historySources.filter(source => statusStore.enabledSource.includes(history2Eqlist[source]))
-  statusStore.multiApi = settingsStore.advancedSettings.multiApi
   statusStore.startUpdatingEqMessage()
   autoScale.value = Math.min(window.innerWidth / 1800, window.innerHeight / 1100)
   getGeojson()
@@ -134,6 +139,9 @@ watch(() => settingsStore.mainSettings.locale, (newLocale) => {
 }, { immediate: true })
 watch(() => settingsStore.advancedSettings, (newValue) => {
   localStorage.setItem('advancedSettings', JSON.stringify(newValue))
+}, { deep: true })
+watch(() => accessStore.capabilities, (newValue) => {
+  localStorage.setItem('accessSettings', JSON.stringify(newValue))
 }, { deep: true })
 watch(() => settingsStore.mainSettings.gameMode, (enabled) => {
   void syncTrayGameModeMenu(enabled)

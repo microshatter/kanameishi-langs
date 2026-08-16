@@ -7,7 +7,7 @@
             <div class="text" :class="fontClass" v-if="eqMessage.isEew">{{ formatText(eqMessage.reportNumText) }}</div>
             <div class="text" :class="fontClass">{{ formatText(eqMessage.hypocenterText) }}</div>
             <div class="text" :class="fontClass">{{ formatText(eqMessage.depthText) }}</div>
-            <div class="text" :class="fontClass">{{ formatText(eqMessage.originTimeText) }}</div>
+            <div class="text" :class="fontClass">{{ formatText(originTimeText) }}</div>
             <div class="text" :class="fontClass">{{ formatText(eqMessage.magnitudeText) }}</div>
             <div class="text" :class="fontClass">{{ formatText(eqMessage.maxIntensityText) }}</div>
             <div class="text" :class="fontClass">{{ t('common.elapsed') }}{{ formatText(msToTime(passedTimeFromOrigin)) }}</div>
@@ -19,7 +19,7 @@
 import { useI18n } from 'vue-i18n';
 const { t } = useI18n({ useScope: 'global' })
 import { onBeforeUnmount, ref, reactive, computed, watch, inject } from 'vue';
-import { formatText, msToTime, calcPassedTime, judgeSameEvent, calcTimeDiff, formatCsis } from '@/utils/Utils';
+import { formatText, msToTime, calcPassedTime, judgeSameEvent, calcTimeDiff, formatCsis, formatTimeZone } from '@/utils/Utils';
 import { EewEvent, EqlistEvent, ignoredIds } from '@/classes/EewEqlistClasses';
 import { useTimeStore } from '@/stores/time';
 import { useStatusStore } from '@/stores/status';
@@ -41,6 +41,10 @@ const timeStore = useTimeStore()
 const statusStore = useStatusStore()
 const settingsStore = useSettingsStore()
 const eqMessage = computed(()=>statusStore.eqMessage[props.source])
+const originTimeText = computed(() => {
+    const text = eqMessage.value.originTimeText.replace(/ \(JST\)$/, '')
+    return text ? `${text} (UTC${formatTimeZone(eqMessage.value.timeZone)})` : ''
+})
 
 onBeforeUnmount(()=>{
     clearTimeout(timer)

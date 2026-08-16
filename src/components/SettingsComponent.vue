@@ -3,95 +3,16 @@
         <div class="container">
             <div class="title">{{ t('settings.title') }}</div>
             <div class="settings">
-                <span class="sub-title">
-                    {{ t('settings.dataSources.title') }}
-                    <el-popover
-                        placement="top"
-                        :width="300"
-                        trigger="hover"
-                    >
-                        <template #reference>
-                            <question-filled width="1em" height="1em" />
-                        </template>
-                        <strong>
-                            <p>{{ t('settings.popover.needReloadPage') }}</p>
-                        </strong>
-                    </el-popover>
-                </span>
-                <div class="group">
-                    <div class="switch-group">
-                        <span class="font-bold w-full">{{ t('settings.dataSources.eew.title') }}</span>
-                        <div class="switch-full">
-                            <div>{{ t('settings.dataSources.eew.cea') }}</div>
-                            <el-switch v-model="settingsStore.mainSettings.source.ceaEew" @change="handleNeedReload" />
-                        </div>
-                        <div class="switch-full" v-if="settingsStore.advancedSettings.enableIclEew">
-                            <div>{{ t('settings.dataSources.eew.icl') }}</div>
-                            <el-switch v-model="settingsStore.mainSettings.source.iclEew" @change="handleNeedReload" />
-                        </div>
-                        <div class="switch-full">
-                            <div>{{ t('settings.dataSources.eew.sc') }}</div>
-                            <el-switch v-model="settingsStore.mainSettings.source.scEew" @change="handleNeedReload" />
-                        </div>
-                        <div class="switch-full">
-                            <div>{{ t('settings.dataSources.eew.fj') }}</div>
-                            <el-switch v-model="settingsStore.mainSettings.source.fjEew" @change="handleNeedReload" />
-                        </div>
-                        <div class="switch-full">
-                            <div>{{ t('settings.dataSources.eew.cwa') }}</div>
-                            <el-switch v-model="settingsStore.mainSettings.source.cwaEew" @change="handleNeedReload" />
-                        </div>
-                        <div class="switch-full">
-                            <div>{{ t('settings.dataSources.eew.jma') }}</div>
-                            <el-switch v-model="settingsStore.mainSettings.source.jmaEew" @change="handleNeedReload" />
-                        </div>
-                        <div class="switch-full">
-                            <div>{{ t('settings.dataSources.eew.kma') }}</div>
-                            <el-switch v-model="settingsStore.mainSettings.source.kmaEew" @change="handleNeedReload" />
-                        </div>
-                        <div class="switch-full" v-if="settingsStore.advancedSettings.enableGqEew">
-                            <div>{{ t('settings.dataSources.eew.gq') }}</div>
-                            <el-switch v-model="settingsStore.mainSettings.source.gqEew" @change="handleNeedReload" />
-                        </div>
-                    </div>
-                    <div class="switch-group">
-                        <span class="font-bold w-full">{{ t('settings.dataSources.eqlist.title') }}</span>
-                        <div class="switch-full">
-                            <div>{{ t('settings.dataSources.eqlist.cenc') }}</div>
-                            <el-switch v-model="settingsStore.mainSettings.source.cencEqlist" @change="handleNeedReload" />
-                        </div>
-                        <div class="switch-full">
-                            <div>{{ t('settings.dataSources.eqlist.cwa') }}</div>
-                            <el-switch v-model="settingsStore.mainSettings.source.cwaEqlist" @change="handleNeedReload" />
-                        </div>
-                        <div class="switch-full">
-                            <div>{{ t('settings.dataSources.eqlist.jma') }}</div>
-                            <el-switch v-model="settingsStore.mainSettings.source.jmaEqlist" @change="handleNeedReload" />
-                        </div>
-                        <div class="switch-full">
-                            <div>{{ t('settings.dataSources.eqlist.kma') }}</div>
-                            <el-switch v-model="settingsStore.mainSettings.source.kmaEqlist" @change="handleNeedReload" />
-                        </div>
-                        <div class="switch-full">
-                            <div>{{ t('settings.dataSources.eqlist.usgs') }}</div>
-                            <el-switch v-model="settingsStore.mainSettings.source.usgsEqlist" @change="handleNeedReload" />
-                        </div>
-                        <div class="switch-full">
-                            <div>{{ t('settings.dataSources.eqlist.fssn') }}</div>
-                            <el-switch v-model="settingsStore.mainSettings.source.fssnEqlist" @change="handleFssnEqlist" />
-                        </div>
-                    </div>
-                    <div class="switch-group">
-                        <span class="font-bold w-full">{{ t('settings.dataSources.tsunami.title') }}</span>
-                        <div class="switch-full">
-                            <div>{{ t('settings.dataSources.tsunami.nmefc') }}</div>
-                            <el-switch v-model="settingsStore.mainSettings.source.nmefcTsunami" @change="handleNeedReload" />
-                        </div>
-                        <div class="switch-full">
-                            <div>{{ t('settings.dataSources.tsunami.jma') }}</div>
-                            <el-switch v-model="settingsStore.mainSettings.source.jmaTsunami" @change="handleNeedReload" />
-                        </div>
-                    </div>
+                <span class="sub-title">预警/信息数据源</span>
+                <div class="group data-source-actions">
+                    <el-button type="primary" plain @click="showDataSourceManager = true">
+                        <el-icon><Setting /></el-icon>
+                        <span>数据源管理</span>
+                    </el-button>
+                    <el-button type="primary" plain @click="showApiKeyManager = true">
+                        <el-icon><Key /></el-icon>
+                        <span>管理 API Key</span>
+                    </el-button>
                 </div>
                 <span class="sub-title">{{ t('settings.monitoring.title') }}</span>
                 <div class="group">
@@ -167,11 +88,11 @@
                                 >
                                     <el-option :label="t('settings.monitoring.hypoTextOff')" :value="0" />
                                     <el-option :label="t('settings.monitoring.hypoTextOn')" :value="1" />
-                                    <el-option :label="t('settings.monitoring.hypoTextDetail')" :value="2" v-show="settingsStore.advancedSettings.advancedHypoInf" />
+                                    <el-option :label="t('settings.monitoring.hypoTextDetail')" :value="2" v-show="accessStore.canUse('advancedHypoInf')" />
                                 </el-select>
                             </div>
                         </div>
-                        <div class="w-full" v-if="settingsStore.advancedSettings.enableTremFunctions">
+                        <div class="w-full" v-if="accessStore.canUse('tremFunctions')">
                             <div class="switch-full">
                                 <span>{{ t('settings.monitoring.trem') }}</span>
                                 <el-switch v-model="settingsStore.mainSettings.displaySeisNet.tremNet" />
@@ -276,7 +197,7 @@
                                         type="datetime"
                                         size="small"
                                         style="width: 156px;"
-                                        :placeholder="t('settings.monitoring.placeholderDateTime')"
+                                        :placeholder="`选择日期时间(UTC${formatTimeZone(systemTimeZone)})`"
                                         format="YYYY-MM-DD HH:mm:ss"
                                         value-format="YYYY-MM-DD HH:mm:ss"
                                     />
@@ -500,7 +421,7 @@
                                 :format-tooltip="(value) => shindoScale[value]"
                             />
                         </div>
-                        <div class="switch-full" v-if="settingsStore.advancedSettings.enableGqEew">
+                        <div class="switch-full" v-if="accessStore.canUse('gqEew')">
                             <div class="justify-between" style="width: 10rem;">
                                 <span>{{ t('settings.behavior.filter.gqMagThreshold') }}</span>
                                 <div class="mag" :class="setClassName(calcCsisLevel(settingsStore.mainSettings.gqActionMag, 10, 0), false)">
@@ -1002,6 +923,10 @@
                     <span class="font-bold w-full">{{ t('settings.display.features.title') }}</span>
                     <div class="switch-group">
                         <div class="switch-full">
+                            <span>显示时钟</span>
+                            <el-switch v-model="settingsStore.mainSettings.displayClock" />
+                        </div>
+                        <div class="switch-full">
                             <span>{{ t('settings.display.features.cnFault') }}</span>
                             <el-switch v-model="settingsStore.mainSettings.displayCnFault" />
                         </div>
@@ -1104,22 +1029,7 @@
                             </el-select>
                         </div>
                         <div class="switch-full">
-                            <span>{{ t('settings.advanced.provinceCea') }}</span>
-                            <el-switch v-model="settingsStore.advancedSettings.provinceCeaEew"
-                            @change="handleNeedReload" />
-                        </div>
-                        <div class="switch-full" v-if="settingsStore.displayTokenButton">
-                            <span>{{ t('settings.advanced.manageToken') }}</span>
-                            <el-button size="small" @click="showTokenManager = true">{{ t('settings.advanced.manage') }}</el-button>
-                        </div>
-                        <div class="switch-full" v-if="settingsStore.advancedSettings.enableMultiApi">
-                            <span>{{ t('settings.advanced.multiApi') }}</span>
-                            <el-switch
-                            v-model="settingsStore.advancedSettings.multiApi"
-                            @change="handleNeedReload" />
-                        </div>
-                        <div class="switch-full">
-                            <span>{{ t('settings.advanced.displayApi') }}</span>
+                            <span>显示API名称</span>
                             <el-switch v-model="settingsStore.advancedSettings.displayApiType" />
                         </div>
                         <div class="switch-full">
@@ -1297,6 +1207,11 @@
                 </div>
             </div>
         </div>
+        <DataSourceManager
+            v-model="showDataSourceManager"
+            @change="handleNeedReload"
+            @manage-api-key="openApiKeyManager"
+        />
         <el-dialog v-model="verifyDialog" width="300px" top="20vh" :show-close="false" append-to-body>
             <el-form :model="idForm">
                 <el-form-item :label="t('advance.verifyDialog.username')" label-width="60px">
@@ -1339,14 +1254,20 @@
                 <el-button type="default" @click="customizeAudio = false">{{ t('common.close') }}</el-button>
             </template>
         </el-dialog>
-        <el-dialog v-model="showTokenManager" width="300px" top="20vh" :show-close="false" append-to-body>
-            <el-form :model="idForm">
+        <el-dialog v-model="showApiKeyManager" title="管理 API Key" width="min(460px, 92vw)" top="20vh" :show-close="false" append-to-body>
+            <el-form :model="settingsStore.mainSettings.apiKeys">
                 <el-form-item label="FAN Studio API" label-width="110px">
-                    <el-input v-model="settingsStore.advancedSettings.tokens.fanApiKey" @change="handleNeedReload" />
+                    <div class="api-key-field">
+                        <el-input v-model="settingsStore.mainSettings.apiKeys.fanApiKey" @change="handleNeedReload" />
+                        <el-button type="primary" @click="openUrl('https://api.fanstudio.tech/dev-platform/')">
+                            <el-icon><TopRight /></el-icon>
+                            <span>前往申请</span>
+                        </el-button>
+                    </div>
                 </el-form-item>
             </el-form>
             <template #footer>
-                <el-button type="primary" @click="showTokenManager = false">{{ t('advance.tokenManager.done') }}</el-button>
+                <el-button type="primary" @click="showApiKeyManager = false">{{ t('advance.tokenManager.done') }}</el-button>
             </template>
         </el-dialog>
         <el-dialog class="about-box" v-model="showAbout" width="60%" :show-close="false" append-to-body>
@@ -1409,21 +1330,22 @@ import { useI18n } from 'vue-i18n';
 const {t, locale, availableLocales} = useI18n({useScope: 'global'})
 
 import { useSettingsStore } from '@/stores/settings';
+import { useAccessStore } from '@/stores/access';
 import { useStatusStore } from '@/stores/status';
 import { chimeUrls, utilUrls } from '@/utils/Urls';
 import { APP_TITLE, APP_VERSION } from '@/utils/AppInfo';
 import Http from '@/classes/Http';
 import { h, ref, reactive, onMounted, onBeforeUnmount } from 'vue'
-import { QuestionFilled } from '@element-plus/icons-vue';
-import { calcPassedTime, formatCsis, openUrl, playSound, setClassName, shindoScale, calcCsisLevel } from '@/utils/Utils';
+import { Key, QuestionFilled, Setting, TopRight } from '@element-plus/icons-vue';
+import { calcPassedTime, formatCsis, openUrl, playSound, setClassName, shindoScale, calcCsisLevel, formatTimeZone, systemTimeZone } from '@/utils/Utils';
 import { join, appDataDir } from "@tauri-apps/api/path";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { exists, mkdir } from "@tauri-apps/plugin-fs";
 import { enable, disable, isEnabled } from '@tauri-apps/plugin-autostart';
 import { platform, arch } from '@tauri-apps/plugin-os';
 import { isTauri as getIsTauri } from '@tauri-apps/api/core';
-import { Setting } from '@element-plus/icons-vue';
 import MarkdownIt from 'markdown-it';
+import DataSourceManager from './components/DataSourceManager.vue';
 
 const SHOW_ABOUT_FLG = '20260313.00'
 
@@ -1439,10 +1361,12 @@ const simplifyMarks = {
     4: t('settings.performance.simplifyExtreme')
 }
 const settingsStore = useSettingsStore()
+const accessStore = useAccessStore()
 const statusStore = useStatusStore()
+const showDataSourceManager = ref(false)
 const replayDateTime = ref('')
 const setReplayDateTime = () => {
-    const passedTime = Math.max(Math.round(calcPassedTime(replayDateTime.value, 8) / 600) / 100, 0)
+    const passedTime = Math.max(Math.round(calcPassedTime(replayDateTime.value, systemTimeZone) / 600) / 100, 0)
     settingsStore.mainSettings.displaySeisNet.delay = passedTime
 }
 const setLat = (type)=>(val)=>{
@@ -1476,8 +1400,27 @@ const setLng = (type)=>(val)=>{
     }
 }
 const autoLocate = async ()=>{
-    const res = await Http.get(utilUrls.geoIp)
-    if(res.city_zh == null){
+    let location = null
+    for(const source of utilUrls.geoIp){
+        try{
+            const res = await Http.get(source.url)
+            if(!res) continue
+
+            const parsed = source.func(res)
+            const lat = Number(parsed?.lat)
+            const lng = Number(parsed?.lng)
+            const place = typeof parsed?.place === 'string' ? parsed.place.trim() : ''
+            if(!place || !Number.isFinite(lat) || !Number.isFinite(lng)
+                || lat < -90 || lat > 90 || lng < -180 || lng > 180) continue
+
+            location = { lat, lng, place }
+            break
+        }
+        catch(err){
+            console.log(err)
+        }
+    }
+    if(!location){
         ElMessage({
             message: t('settings.notificationMessages.getLocationFailed'),
             type: 'error',
@@ -1485,8 +1428,8 @@ const autoLocate = async ()=>{
     }
     else{
         ElMessageBox.confirm(
-            t('settings.notificationMessages.confirmLocation', { city: res.city_zh, lat: res.latitude, lng: res.longitude }),
-            t('settings.display.location.autoLocateTitle'),
+            `你的IP定位地址是${location.place}，参考经纬度(${location.lat}, ${location.lng})。是否更新设置？`,
+            '自动定位',
             {
                 confirmButtonText: t('common.confirm'),
                 cancelButtonText: t('common.cancel'),
@@ -1494,8 +1437,8 @@ const autoLocate = async ()=>{
                 showClose: false,
             }
         ).then(()=>{
-            setLat('userLatLng')(res.latitude)
-            setLng('userLatLng')(res.longitude)
+            setLat('userLatLng')(location.lat)
+            setLng('userLatLng')(location.lng)
             ElMessage({
                 message: t('settings.notificationMessages.locationUpdated'),
                 type: 'success',
@@ -1567,27 +1510,6 @@ const needReload = ref(false)
 const handleReload = () => {
     window.location.reload()
 }
-const handleFssnEqlist = (newVal) => {
-    if(newVal) {
-        ElMessageBox.confirm(
-            t('settings.notificationMessages.fssnConfirmMsg'),
-            t('settings.notificationMessages.fssnConfirmTitle'),
-            {
-                confirmButtonText: t('common.confirm'),
-                cancelButtonText: t('common.cancel'),
-                type: 'warning',
-                showClose: false,
-            }
-        ).then(()=>{
-            handleNeedReload()
-        }).catch(()=>{
-            settingsStore.mainSettings.source.fssnEqlist = false
-        })
-    }
-    else {
-        handleNeedReload()
-    }
-}
 const handleMockEew = newVal => {
     if(newVal) {
         ElMessageBox.confirm(
@@ -1609,7 +1531,11 @@ const handleMockEew = newVal => {
         handleNeedReload()
     }
 }
-const showTokenManager = ref(false)
+const showApiKeyManager = ref(false)
+const openApiKeyManager = () => {
+    showDataSourceManager.value = false
+    showApiKeyManager.value = true
+}
 const advancedInput = ref('')
 const verifyDialog = ref(false)
 let verifyType = ''
@@ -1622,7 +1548,6 @@ const handleAdvance = (val)=>{
         case 'enableIclEew':
         case 'enableTremFunctions':
         case 'enableGqEew':
-        case 'enableMultiApi':
         case 'enableNmefcTsunami':
         case 'verifyAdmin': {
             verifyType = val
@@ -1630,7 +1555,7 @@ const handleAdvance = (val)=>{
             break
         }
         case 'enableAdvancedHypoInf': {
-            settingsStore.advancedSettings.advancedHypoInf = true
+            accessStore.grant('advancedHypoInf')
             ElMessage({
                 message: '功能已开启',
                 type: 'success'
@@ -1638,7 +1563,7 @@ const handleAdvance = (val)=>{
             break
         }
         case 'disableAdvancedHypoInf': {
-            settingsStore.advancedSettings.advancedHypoInf = false
+            accessStore.revoke('advancedHypoInf')
             if (settingsStore.mainSettings.displaySeisNet.niedHypoInfTextInfo == 2)
                 settingsStore.mainSettings.displaySeisNet.niedHypoInfTextInfo = 1
             ElMessage({
@@ -1648,9 +1573,9 @@ const handleAdvance = (val)=>{
             break
         }
         case 'disableIclEew': {
-            if(settingsStore.mainSettings.source.iclEew) handleNeedReload()
-            settingsStore.advancedSettings.enableIclEew = false
-            settingsStore.mainSettings.source.iclEew = false
+            if(settingsStore.isDataSourceEnabled('iclEew')) handleNeedReload()
+            accessStore.revoke('iclEew')
+            settingsStore.setDataSourceEnabled('iclEew', false)
             localStorage.removeItem('iclUrl')
             ElMessage({
                 message: t('settings.notificationMessages.featureDisabled'),
@@ -1659,7 +1584,7 @@ const handleAdvance = (val)=>{
             break
         }
         case 'disableTremFunctions': {
-            settingsStore.advancedSettings.enableTremFunctions = false
+            accessStore.revoke('tremFunctions')
             settingsStore.mainSettings.displaySeisNet.tremNet = false
             localStorage.removeItem('tremUrl')
             handleNeedReload()
@@ -1670,9 +1595,9 @@ const handleAdvance = (val)=>{
             break
         }
         case 'disableGqEew': {
-            if(settingsStore.mainSettings.source.gqEew) handleNeedReload()
-            settingsStore.advancedSettings.enableGqEew = false
-            settingsStore.mainSettings.source.gqEew = false
+            if(settingsStore.isDataSourceEnabled('gqEew')) handleNeedReload()
+            accessStore.revoke('gqEew')
+            settingsStore.setDataSourceEnabled('gqEew', false)
             localStorage.removeItem('gqUrl')
             ElMessage({
                 message: t('settings.notificationMessages.featureDisabled'),
@@ -1680,19 +1605,8 @@ const handleAdvance = (val)=>{
             })
             break
         }
-        case 'disableMultiApi': {
-            if(settingsStore.advancedSettings.multiApi) handleNeedReload()
-            settingsStore.advancedSettings.enableMultiApi = false
-            settingsStore.advancedSettings.multiApi = false
-            localStorage.removeItem('multiApi')
-            ElMessage({
-                message: t('settings.notificationMessages.featureDisabled'),
-                type: 'success'
-            })
-            break
-        }
         case 'disableNmefcTsunami': {
-            settingsStore.advancedSettings.enableNmefcTsunami = false
+            accessStore.revoke('nmefcTsunamiMap')
             localStorage.removeItem('nmefcTsunami')
             handleNeedReload()
             ElMessage({
@@ -1709,8 +1623,9 @@ const postVerify = async (type = verifyType)=>{
         case 'enableIclEew': {
             const res = await Http.post('https://api.lipomoea.tech/icl_url', idForm)
             if(res && res.success){
-                settingsStore.advancedSettings.enableIclEew = true
                 localStorage.setItem('iclUrl', JSON.stringify(res.data))
+                accessStore.grant('iclEew')
+                if(settingsStore.isDataSourceEnabled('iclEew')) handleNeedReload()
                 verifyDialog.value = false
                 ElMessage({
                     message: t('settings.notificationMessages.authSuccess'),
@@ -1728,8 +1643,8 @@ const postVerify = async (type = verifyType)=>{
         case 'enableTremFunctions': {
             const res = await Http.post('https://api.lipomoea.tech/trem_url', idForm)
             if(res && res.success){
-                settingsStore.advancedSettings.enableTremFunctions = true
                 localStorage.setItem('tremUrl', JSON.stringify(res.data))
+                accessStore.grant('tremFunctions')
                 handleNeedReload()
                 verifyDialog.value = false
                 ElMessage({
@@ -1748,27 +1663,9 @@ const postVerify = async (type = verifyType)=>{
         case 'enableGqEew': {
             const res = await Http.post('https://api.lipomoea.tech/gq_url', idForm)
             if(res && res.success){
-                settingsStore.advancedSettings.enableGqEew = true
                 localStorage.setItem('gqUrl', JSON.stringify(res.data))
-                verifyDialog.value = false
-                ElMessage({
-                    message: t('settings.notificationMessages.authSuccess'),
-                    type: 'success'
-                })
-            }
-            else{
-                ElMessage({
-                    message: t('settings.notificationMessages.authFailed'),
-                    type: 'error'
-                })
-            }
-            break
-        }
-        case 'enableMultiApi': {
-            const res = await Http.post('https://api.lipomoea.tech/multi_api', idForm)
-            if(res && res.success){
-                settingsStore.advancedSettings.enableMultiApi = true
-                localStorage.setItem('multiApi', JSON.stringify(res.data))
+                accessStore.grant('gqEew')
+                if(settingsStore.isDataSourceEnabled('gqEew')) handleNeedReload()
                 verifyDialog.value = false
                 ElMessage({
                     message: t('settings.notificationMessages.authSuccess'),
@@ -1786,8 +1683,8 @@ const postVerify = async (type = verifyType)=>{
         case 'enableNmefcTsunami': {
             const res = await Http.post('https://api.lipomoea.tech/cn_tsunami_topo_json_url', idForm)
             if(res && res.success){
-                settingsStore.advancedSettings.enableNmefcTsunami = true
                 localStorage.setItem('nmefcTsunami', JSON.stringify(res.data))
+                accessStore.grant('nmefcTsunamiMap')
                 handleNeedReload()
                 verifyDialog.value = false
                 ElMessage({
@@ -1807,7 +1704,6 @@ const postVerify = async (type = verifyType)=>{
             postVerify('enableIclEew')
             postVerify('enableTremFunctions')
             postVerify('enableGqEew')
-            postVerify('enableMultiApi')
             postVerify('enableNmefcTsunami')
         }
     }
@@ -2114,6 +2010,15 @@ onBeforeUnmount(() => {
                 align-items: flex-start;
                 row-gap: 4px;
             }
+            .data-source-actions{
+                flex-direction: row;
+                flex-wrap: wrap;
+                gap: 8px;
+
+                .el-button + .el-button{
+                    margin-left: 0;
+                }
+            }
             .switch-group{
                 width: 100%;
                 display: flex;
@@ -2226,6 +2131,12 @@ ul {
 }
 .font-bold {
     font-weight: 700;
+}
+.api-key-field{
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    width: 100%;
 }
 .text-right {
     text-align: right;
