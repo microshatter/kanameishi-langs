@@ -23,7 +23,6 @@ const pickAssociationVelocity = 3.5
 const pickAssociationPadding = 2000
 const clusterMatchResidualTieTolerance = 1000
 const duplicatePickResidualTieTolerance = 1000
-const maxEffectivePickSelectionIterations = 2
 const stableHypocenterUpdateThreshold = 15
 const sameHypocenterThreshold = {
     lat: 1e-9,
@@ -36,10 +35,12 @@ const defaultClusterMatchResidual = minResidualThreshold
 const largeClusterMatchResidual = 7500
 const largeClusterMatchStationCount = 50
 const defaultWaveCountPenaltyConfig = { thresholdRatio: 3, maxPenalty: 2 }
+const unexplainedPickPenaltyWeight = 1
+const minUnexplainedPickPenaltyDenominator = 10
 const inheritedOutlierFilterStages = [
-    { level: 3, minCount: 100, minRemainingInheritedRatio: 0.9, ratio: 2, minResidual: 3000, maxMeanResidual: 1500, waveCountPenalty: { thresholdRatio: 4, maxPenalty: 1 } },
-    { level: 2, minCount: 30, minRemainingInheritedRatio: 0.8, ratio: 2.5, minResidual: 4000, maxMeanResidual: 2000, waveCountPenalty: { thresholdRatio: 3.5, maxPenalty: 1.5 } },
-    { level: 1, minCount: 10, minRemainingInheritedRatio: 0.5, ratio: 3, minResidual: 5000, waveCountPenalty: defaultWaveCountPenaltyConfig }
+    { level: 3, minCount: 100, minRemainingInheritedRatio: 0.9, ratio: 2, minResidual: 3000, maxMeanResidual: 1500, waveCountPenalty: { thresholdRatio: 4.5, maxPenalty: 0.5 } },
+    { level: 2, minCount: 30, minRemainingInheritedRatio: 0.8, ratio: 2.5, minResidual: 4000, maxMeanResidual: 2000, waveCountPenalty: { thresholdRatio: 4, maxPenalty: 1 } },
+    { level: 1, minCount: 10, minRemainingInheritedRatio: 0.5, ratio: 3, minResidual: 5000, waveCountPenalty: { thresholdRatio: 3.5, maxPenalty: 1.5 } }
 ]
 const minReliablePickCount = 100
 const minGreedyOutlierPickCount = 30
@@ -389,6 +390,7 @@ export class FindNiedHypocenter {
     refreshClusterResults() {
         this.clusters.forEach(cluster => {
             if(!cluster.dirty) return
+            // this.logClusterTriggerStamps(cluster)
             if(this.getClusterStationCount(cluster) < minInferenceStationCount) {
                 cluster.result = this.createClusterResult(cluster, this.createHypocenterResult(null, this.createInvalidLikelihood(null)))
                 cluster.previousResults = { P: null, S: null }
@@ -409,53 +411,64 @@ export class FindNiedHypocenter {
         })
     }
 
-    // Classify every pick, cap each station-phase group, then refit with effective picks.
+    // Classify every pick, cap each station-phase group, then refit without duplicate picks.
     findBestHypocenterWithEffectivePicks(picks, initialHypocenter, previousWaveMaps) {
         const penaltyContext = this.createInactivePenaltyContext(picks)
         // this.logInferenceRound(1, picks)
-        let classificationResult = this.findBestHypocenter(
+        const classificationResult = this.findBestHypocenter(
             picks,
             initialHypocenter,
             previousWaveMaps,
             penaltyContext
         )
+        const inferenceFilterStageLevels = [classificationResult.filterStageLevel ?? 0]
         const weightedPhasePickIds = this.getWeightedPhasePickIds(classificationResult)
-        let effectivePickIds = this.selectEffectivePickIds(classificationResult)
-        if(this.areSetsEqual(weightedPhasePickIds, effectivePickIds)) {
-            return classificationResult
-        }
-        let finalResult = classificationResult
-
-        for(let i = 0; i < maxEffectivePickSelectionIterations; i++) {
-            const effectivePicks = picks.filter(pick => effectivePickIds.has(pick.pickId))
-            if(this.getDistinctStationCount(effectivePicks) < minInferenceStationCount) {
-                return this.createEffectivePickInvalidResult(picks, classificationResult, effectivePickIds)
+        const effectivePickIds = this.selectEffectivePickIds(classificationResult)
+        const duplicatePickIds = this.getDuplicatePickIds(weightedPhasePickIds, effectivePickIds)
+        if(duplicatePickIds.size === 0) {
+            return {
+                ...classificationResult,
+                inferenceFilterStageLevels
             }
-            // this.logInferenceRound(i + 2, effectivePicks)
-            finalResult = this.findBestHypocenter(
-                effectivePicks,
-                finalResult?.hypocenter || initialHypocenter,
-                previousWaveMaps,
-                penaltyContext
-            )
-            classificationResult = this.evaluateHypocenter(
-                picks,
-                finalResult.hypocenter,
-                previousWaveMaps,
-                penaltyContext
-            )
-            const nextEffectivePickIds = this.selectEffectivePickIds(classificationResult)
-            if(this.areSetsEqual(effectivePickIds, nextEffectivePickIds)) break
-            if(i + 1 < maxEffectivePickSelectionIterations) effectivePickIds = nextEffectivePickIds
         }
 
-        finalResult.pickResults = this.createAllPickResults(
+        const effectivePicks = picks.filter(pick => effectivePickIds.has(pick.pickId))
+        if(this.getDistinctStationCount(effectivePicks) < minInferenceStationCount) {
+            return {
+                ...this.createDuplicatePickInvalidResult(picks, classificationResult, duplicatePickIds),
+                inferenceFilterStageLevels
+            }
+        }
+        const refitPicks = picks.filter(pick => !duplicatePickIds.has(pick.pickId))
+        // this.logInferenceRound(2, refitPicks)
+        const finalResult = this.findBestHypocenter(
+            refitPicks,
+            classificationResult?.hypocenter || initialHypocenter,
+            previousWaveMaps,
+            penaltyContext
+        )
+        inferenceFilterStageLevels.push(finalResult.filterStageLevel ?? 0)
+        if(!Number.isFinite(finalResult.score)) {
+            return {
+                ...this.createDuplicatePickInvalidResult(picks, classificationResult, duplicatePickIds),
+                inferenceFilterStageLevels
+            }
+        }
+
+        const finalPickResults = this.createAllPickResults(
             picks,
             classificationResult,
             finalResult,
-            effectivePickIds
+            duplicatePickIds
         )
-        return finalResult
+        return this.createLikelihoodResultWithPickMetrics(
+            {
+                ...finalResult,
+                inferenceFilterStageLevels
+            },
+            finalPickResults,
+            picks.length
+        )
     }
 
     logInferenceRound(round, picks) {
@@ -463,6 +476,34 @@ export class FindNiedHypocenter {
             round,
             pickCount: picks.length,
             stationCount: this.getDistinctStationCount(picks)
+        })
+    }
+
+    logClusterTriggerStamps(cluster) {
+        const triggerStampsByStation = new Map()
+        cluster.picks.forEach(pick => {
+            if(!triggerStampsByStation.has(pick.stationId)) {
+                triggerStampsByStation.set(pick.stationId, {
+                    latLng: pick.latLng,
+                    triggerStamps: []
+                })
+            }
+            triggerStampsByStation.get(pick.stationId).triggerStamps.push(pick.triggerStamp)
+        })
+        const stations = [...triggerStampsByStation.entries()]
+            .map(([stationId, { latLng, triggerStamps }]) => ({
+                stationId,
+                latLng,
+                triggerStamps: triggerStamps.sort((a, b) => a - b)
+            }))
+            .sort((station1, station2) =>
+                station1.triggerStamps[0] - station2.triggerStamps[0] ||
+                station1.stationId - station2.stationId
+            )
+        console.log('[FindNiedHypocenter] cluster triggerStamps', {
+            clusterId: cluster.id,
+            updates: cluster.updates,
+            stations
         })
     }
 
@@ -494,6 +535,10 @@ export class FindNiedHypocenter {
         return new Set([...selectedByStationWave.values()].map(candidate => candidate.item.pick.pickId))
     }
 
+    getDuplicatePickIds(weightedPhasePickIds, effectivePickIds) {
+        return new Set([...weightedPhasePickIds].filter(pickId => !effectivePickIds.has(pickId)))
+    }
+
     isPreferredEffectivePick(candidate, selected) {
         const residualDiff = candidate.residual - selected.residual
         if(Math.abs(residualDiff) > duplicatePickResidualTieTolerance) return residualDiff < 0
@@ -502,20 +547,17 @@ export class FindNiedHypocenter {
         return compareStrings(candidate.item.pick.pickId, selected.item.pick.pickId) < 0
     }
 
-    createAllPickResults(picks, classificationResult, finalResult, effectivePickIds) {
+    createAllPickResults(picks, classificationResult, finalResult, duplicatePickIds) {
         const classifiedResultMap = new Map(
             (classificationResult?.pickResults || []).map(item => [item.pick?.pickId, item])
         )
-        const effectiveResultMap = new Map(
+        const finalResultMap = new Map(
             (finalResult?.pickResults || []).map(item => [item.pick?.pickId, item])
         )
         return picks.map(pick => {
-            if(effectivePickIds.has(pick.pickId) && effectiveResultMap.has(pick.pickId)) {
-                return effectiveResultMap.get(pick.pickId)
-            }
+            if(!duplicatePickIds.has(pick.pickId)) return finalResultMap.get(pick.pickId) || null
             const classifiedResult = classifiedResultMap.get(pick.pickId)
             if(!classifiedResult) return null
-            if(classifiedResult.wave !== 'P' && classifiedResult.wave !== 'S') return classifiedResult
             return {
                 ...classifiedResult,
                 weight: 0,
@@ -524,21 +566,15 @@ export class FindNiedHypocenter {
         }).filter(Boolean)
     }
 
-    createEffectivePickInvalidResult(picks, classificationResult, effectivePickIds) {
+    createDuplicatePickInvalidResult(picks, classificationResult, duplicatePickIds) {
         const result = this.createHypocenterResult(null, this.createInvalidLikelihood(null))
-        const effectiveResults = (classificationResult?.pickResults || [])
-            .filter(item => effectivePickIds.has(item.pick?.pickId))
         result.pickResults = this.createAllPickResults(
             picks,
             classificationResult,
-            { pickResults: effectiveResults },
-            effectivePickIds
+            classificationResult,
+            duplicatePickIds
         )
         return result
-    }
-
-    areSetsEqual(set1, set2) {
-        return set1.size === set2.size && [...set1].every(item => set2.has(item))
     }
 
     getClusterStationCount(cluster) {
@@ -744,7 +780,7 @@ export class FindNiedHypocenter {
         const results = [...greedyResults]
         if(previousWaveMap?.size) {
             results.push(
-                this.calcPreviousWaveScenarioLikelihood(
+                ...this.calcPreviousWaveScenarioLikelihoods(
                     picks,
                     hypocenter,
                     firstWave,
@@ -822,20 +858,21 @@ export class FindNiedHypocenter {
                 return { key: result.scenario || key, result }
             }))
         const previousScenarioResults = ['P', 'S']
-            .map(firstWave => {
+            .flatMap(firstWave => {
                 const previousWaveMap = previousWaveMaps?.[firstWave]
-                if(!previousWaveMap?.size) return null
-                const result = this.calcPreviousWaveScenarioLikelihood(
+                if(!previousWaveMap?.size) return []
+                return this.calcPreviousWaveScenarioLikelihoods(
                     picks,
                     hypocenter,
                     firstWave,
                     optionCache,
                     previousWaveMap,
                     penaltyContext
-                )
-                return { key: result.scenario || `${firstWave}_PREV`, result }
+                ).map(result => ({
+                    key: `${result.scenario || `${firstWave}_PREV`}_${result.filterStageLevel ?? 0}`,
+                    result
+                }))
             })
-            .filter(Boolean)
         const scenarioResults = [...greedyScenarioResults, ...previousScenarioResults]
         const rmses = Object.fromEntries(
             scenarioResults.map(({ key, result }) => [key, result.rmse])
@@ -917,9 +954,7 @@ export class FindNiedHypocenter {
         )
     }
 
-    calcPreviousWaveScenarioLikelihood(picks, hypocenter, firstWave, optionCache, previousWaveMap, penaltyContext = this.createInactivePenaltyContext(picks)) {
-        const pickResults = new Array(picks.length)
-        const originEntries = []
+    calcPreviousWaveScenarioLikelihoods(picks, hypocenter, firstWave, optionCache, previousWaveMap, penaltyContext = this.createInactivePenaltyContext(picks)) {
         const triggerRankWeights = this.calcTriggerRankWeights(picks)
         const weightedPickCount = this.calcWeightedPickCount(picks, triggerRankWeights)
         const inheritedItems = []
@@ -929,52 +964,55 @@ export class FindNiedHypocenter {
             const item = this.createInheritedScenarioPickItem(i, pick, hypocenter, previousWave, optionCache, triggerRankWeights)
             if(item) inheritedItems.push(item)
         }
-        const inheritedFilterResult = this.calcInheritedOutlierFilterResult(inheritedItems, weightedPickCount)
-        const { outlierIndexes, filterStage } = inheritedFilterResult
-        inheritedItems.forEach(item => {
-            if(outlierIndexes.has(item.index)) return
-            pickResults[item.index] = this.addScenarioPickResult(
-                picks[item.index],
-                hypocenter,
-                item.wave,
-                optionCache,
-                triggerRankWeights,
-                null,
-                originEntries,
-                item.options
-            )
-        })
-        if(this.calcWeightSum(originEntries) <= 0) {
-            return this.createInvalidLikelihood(firstWave, null, `${firstWave}_PREV`)
-        }
-        for(const i of this.createScenarioInferenceIndexes(picks)) {
-            if(pickResults[i]) continue
-            const pick = picks[i]
-            const options = this.calcPickOriginOptions(pick, hypocenter, optionCache)
-            const wave = this.selectScenarioWave(pick, options, originEntries, triggerRankWeights, filterStage)
-            pickResults[i] = this.addScenarioPickResult(
-                pick,
-                hypocenter,
-                wave,
-                optionCache,
-                triggerRankWeights,
-                null,
-                originEntries,
-                options
-            )
-        }
-        return this.createScenarioLikelihoodResult(
-            picks,
-            hypocenter,
-            firstWave,
-            null,
-            `${firstWave}_PREV`,
-            optionCache,
-            pickResults.filter(Boolean),
-            originEntries,
-            penaltyContext,
-            filterStage
-        )
+        return this.calcInheritedOutlierFilterResults(inheritedItems, weightedPickCount)
+            .map(({ outlierIndexes, filterStage }) => {
+                const pickResults = new Array(picks.length)
+                const originEntries = []
+                inheritedItems.forEach(item => {
+                    if(outlierIndexes.has(item.index)) return
+                    pickResults[item.index] = this.addScenarioPickResult(
+                        picks[item.index],
+                        hypocenter,
+                        item.wave,
+                        optionCache,
+                        triggerRankWeights,
+                        null,
+                        originEntries,
+                        item.options
+                    )
+                })
+                if(this.calcWeightSum(originEntries) <= 0) {
+                    return this.createInvalidLikelihood(firstWave, null, `${firstWave}_PREV`)
+                }
+                for(const i of this.createScenarioInferenceIndexes(picks)) {
+                    if(pickResults[i]) continue
+                    const pick = picks[i]
+                    const options = this.calcPickOriginOptions(pick, hypocenter, optionCache)
+                    const wave = this.selectScenarioWave(pick, options, originEntries, triggerRankWeights, filterStage)
+                    pickResults[i] = this.addScenarioPickResult(
+                        pick,
+                        hypocenter,
+                        wave,
+                        optionCache,
+                        triggerRankWeights,
+                        null,
+                        originEntries,
+                        options
+                    )
+                }
+                return this.createScenarioLikelihoodResult(
+                    picks,
+                    hypocenter,
+                    firstWave,
+                    null,
+                    `${firstWave}_PREV`,
+                    optionCache,
+                    pickResults.filter(Boolean),
+                    originEntries,
+                    penaltyContext,
+                    filterStage
+                )
+            })
     }
 
     getScenarioAnchorIndexes(picks, triggerRankWeights) {
@@ -1062,10 +1100,11 @@ export class FindNiedHypocenter {
         ).length
     }
 
-    calcInheritedOutlierFilterResult(inheritedItems, weightedPickCount) {
+    calcInheritedOutlierFilterResults(inheritedItems, weightedPickCount) {
+        const noFilterResult = { outlierIndexes: new Set(), filterStage: null }
         const stages = inheritedOutlierFilterStages
             .filter(stage => inheritedItems.length >= stage.minCount)
-        if(stages.length === 0) return { outlierIndexes: new Set(), filterStage: null }
+        if(stages.length === 0) return [noFilterResult]
         const originEntries = inheritedItems.map(item => ({
             value: item.originStamp,
             weight: item.weight
@@ -1073,25 +1112,22 @@ export class FindNiedHypocenter {
         const originStamp = this.calcWeightedMean(originEntries)
         const meanResidual = this.calcMeanAbsResidual(originEntries, originStamp)
         if(!Number.isFinite(meanResidual) || meanResidual <= 0) {
-            return { outlierIndexes: new Set(), filterStage: null }
+            return [noFilterResult]
         }
-        for(const stage of stages) {
-            if(Number.isFinite(stage.maxMeanResidual) && meanResidual > stage.maxMeanResidual) continue
+        const filterResults = stages.map(stage => {
+            if(Number.isFinite(stage.maxMeanResidual) && meanResidual > stage.maxMeanResidual) return null
             const threshold = Math.max(meanResidual * stage.ratio, stage.minResidual)
-            const outlierIndexes = new Set(
-                inheritedItems
-                    .filter(item => item.index > 0 && Math.abs(item.originStamp - originStamp) > threshold)
-                    .map(item => item.index)
+            const outlierIndexes = new Set(inheritedItems
+                .filter(item => item.index > 0 && Math.abs(item.originStamp - originStamp) > threshold)
+                .map(item => item.index)
             )
             const remainingInheritedPickCount = inheritedItems.length - outlierIndexes.size
-            if(
+            return (
                 remainingInheritedPickCount >= stage.minCount &&
                 remainingInheritedPickCount >= weightedPickCount * stage.minRemainingInheritedRatio
-            ) {
-                return { outlierIndexes, filterStage: stage }
-            }
-        }
-        return { outlierIndexes: new Set(), filterStage: null }
+            ) ? { outlierIndexes, filterStage: stage } : null
+        }).filter(Boolean)
+        return [...filterResults, noFilterResult]
     }
 
     createScenarioLikelihoodResult(picks, hypocenter, firstWave, lastWave, scenario, optionCache, pickResults, originEntries, penaltyContext = this.createInactivePenaltyContext(picks), filterStage = null) {
@@ -1100,8 +1136,6 @@ export class FindNiedHypocenter {
         }
         const originStamp = this.calcWeightedMean(originEntries)
         const rmse = this.calcWeightedRmse(originEntries, originStamp) / 1000
-        const effectivePickCount = this.calcEffectivePickCount(pickResults)
-        const effectiveStationCount = this.calcEffectiveStationCount(pickResults)
         const { penalty: inactivePenalty, exceeded } = this.calcInactiveStationPenalty(
             hypocenter,
             penaltyContext.picks,
@@ -1116,25 +1150,40 @@ export class FindNiedHypocenter {
             pickResults,
             filterStage?.waveCountPenalty ?? defaultWaveCountPenaltyConfig
         )
-        const score = rmse + inactivePenalty * inactivePenaltyWeight + waveCountPenalty
-        const effectiveCount = (effectivePickCount + effectiveStationCount) / 2
-        const qualityScore = this.calcQualityScore(score, effectiveCount)
-        const qualityRank = this.calcQualityRank(qualityScore, effectiveCount)
-        return {
-            score,
+        return this.createLikelihoodResultWithPickMetrics({
             rmse,
             inactivePenalty,
             inactivePenaltyWeight,
             waveCountPenalty,
-            effectivePickCount,
-            effectiveStationCount,
-            qualityScore,
-            qualityRank,
             originStamp,
             firstWave,
             lastWave,
             scenario,
-            filterStageLevel: filterStage?.level ?? 0,
+            filterStageLevel: filterStage?.level ?? 0
+        }, pickResults, penaltyContext.picks.length)
+    }
+
+    createLikelihoodResultWithPickMetrics(result, pickResults, totalPickCount) {
+        const effectivePickCount = this.calcEffectivePickCount(pickResults)
+        const effectiveStationCount = this.calcEffectiveStationCount(pickResults)
+        const unexplainedPickPenalty = this.calcUnexplainedPickPenalty(
+            pickResults,
+            totalPickCount
+        )
+        const score = result.rmse +
+            result.inactivePenalty * result.inactivePenaltyWeight +
+            result.waveCountPenalty +
+            unexplainedPickPenalty
+        const effectiveCount = (effectivePickCount + effectiveStationCount) / 2
+        const qualityScore = this.calcQualityScore(score, effectiveCount)
+        return {
+            ...result,
+            score,
+            unexplainedPickPenalty,
+            effectivePickCount,
+            effectiveStationCount,
+            qualityScore,
+            qualityRank: this.calcQualityRank(qualityScore, effectiveCount),
             pickResults
         }
     }
@@ -1178,6 +1227,20 @@ export class FindNiedHypocenter {
         const sWavePickCount = pickResults.filter(result => result.wave === 'S' && result.weight > 0).length
         const excessRatio = sWavePickCount / pWavePickCount - config.thresholdRatio
         return Math.min(Math.max(excessRatio, 0), config.maxPenalty)
+    }
+
+    calcUnexplainedPickPenalty(pickResults, totalPickCount = pickResults.length) {
+        const explainedStationWaves = new Set()
+        const unexplainedPickCount = pickResults.reduce((count, result) => {
+            if(result.wave === 'O' || result.excludedReason === 'duplicate-phase') return count + 1
+            if(result.weight <= 0 || (result.wave !== 'P' && result.wave !== 'S')) return count
+            const stationWave = `${result.pick?.stationId}:${result.wave}`
+            if(explainedStationWaves.has(stationWave)) return count + 1
+            explainedStationWaves.add(stationWave)
+            return count
+        }, 0)
+        const denominator = Math.max(totalPickCount, minUnexplainedPickPenaltyDenominator)
+        return unexplainedPickCount / denominator * unexplainedPickPenaltyWeight
     }
 
     selectScenarioWave(pick, options, originEntries, triggerRankWeights, outlierFilterStage) {
@@ -1583,6 +1646,7 @@ export class FindNiedHypocenter {
             inactivePenalty: 0,
             inactivePenaltyWeight: 0,
             waveCountPenalty: 0,
+            unexplainedPickPenalty: 0,
             effectivePickCount: 0,
             effectiveStationCount: 0,
             qualityScore: -Infinity,
